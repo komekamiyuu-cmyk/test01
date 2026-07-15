@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#12131a">
+  <meta name="description" content="かんたんDAW - ブラウザで動く初心者向け音楽制作アプリ。WindowsでもAndroidでも使えます。">
+  <title>かんたんDAW - はじめての音楽づくり</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <h1 class="logo"><span class="logo-icon">🎵</span>かんたんDAW</h1>
+    <div class="transport">
+      <button id="playBtn" class="play-btn" title="再生 / 停止(スペースキー)">▶ 再生</button>
+      <div class="tempo-box">
+        <label for="bpmSlider">テンポ</label>
+        <input type="range" id="bpmSlider" min="60" max="180" value="110" step="1">
+        <span id="bpmValue" class="bpm-value">110</span>
+      </div>
+    </div>
+    <div class="top-actions">
+      <button id="demoBtn" class="btn accent" title="お手本の曲を読み込みます">🎧 デモ曲</button>
+      <button id="helpBtn" class="btn" title="使い方を表示">❓ 使い方</button>
+    </div>
+  </header>
+
+  <main>
+    <!-- トラック切り替えタブ -->
+    <nav class="track-tabs" id="trackTabs"></nav>
+
+    <!-- 選択中トラックの操作(音量・ミュート・音色) -->
+    <div class="track-controls" id="trackControls">
+      <span class="hint" id="trackHint"></span>
+      <div class="control-group">
+        <label id="instLabel" for="instSelect" hidden>音色</label>
+        <select id="instSelect" hidden></select>
+        <label for="volSlider">音量</label>
+        <input type="range" id="volSlider" min="0" max="100" value="80">
+        <button id="muteBtn" class="btn small" title="このトラックの音を消す/戻す">🔊</button>
+        <button id="clearTrackBtn" class="btn small" title="このトラックの打ち込みを消す">🧹 クリア</button>
+      </div>
+    </div>
+
+    <!-- 打ち込みグリッド -->
+    <div class="grid-scroller">
+      <div id="grid" class="grid"></div>
+    </div>
+
+    <p class="grid-tip">💡 マスをタップすると音が置けます。なぞると連続で置けます。</p>
+
+    <!-- 詳しい設定(初心者には最初は不要なので折りたたみ) -->
+    <details class="advanced">
+      <summary>⚙️ くわしい設定</summary>
+      <div class="advanced-body">
+        <div class="setting-row">
+          <label for="keySelect">キー(曲の高さ)</label>
+          <select id="keySelect"></select>
+        </div>
+        <div class="setting-row">
+          <label for="scaleSelect">スケール(使う音)</label>
+          <select id="scaleSelect">
+            <option value="penta">ペンタトニック(どこを押してもキレイ・おすすめ)</option>
+            <option value="major">メジャー(明るい)</option>
+            <option value="minor">マイナー(切ない)</option>
+          </select>
+        </div>
+        <div class="setting-row">
+          <label for="lenSelect">曲の長さ</label>
+          <select id="lenSelect">
+            <option value="16">1小節(16マス)</option>
+            <option value="32">2小節(32マス)</option>
+          </select>
+        </div>
+        <div class="setting-row buttons">
+          <button id="wavBtn" class="btn">💾 音声ファイル(WAV)で保存</button>
+          <button id="exportBtn" class="btn">📤 曲データを書き出し</button>
+          <button id="importBtn" class="btn">📥 曲データを読み込み</button>
+          <button id="clearAllBtn" class="btn danger">🗑️ ぜんぶ消す</button>
+          <input type="file" id="importFile" accept=".json,application/json" hidden>
+        </div>
+      </div>
+    </details>
+  </main>
+
+  <!-- 使い方ダイアログ -->
+  <dialog id="helpDialog" class="help-dialog">
+    <h2>🎵 かんたんDAWへようこそ!</h2>
+    <p>むずかしい知識はいりません。3ステップで曲がつくれます。</p>
+    <ol class="help-steps">
+      <li><strong>マスをタップ</strong> — 光ったところで音が鳴ります。まずは「ドラム」で好きに置いてみよう。</li>
+      <li><strong>▶ 再生を押す</strong> — 置いた音がくり返し流れます。聴きながら足したり消したりできます。</li>
+      <li><strong>他のトラックも重ねる</strong> — 「コード」「ベース」「メロディ」タブを切り替えて音を重ねると曲になります。</li>
+    </ol>
+    <div class="help-notes">
+      <p>😊 <strong>音を外す心配はありません。</strong>メロディやベースは相性のいい音だけが並んでいます。</p>
+      <p>🎧 迷ったら<strong>「デモ曲」ボタン</strong>でお手本を聴いてみてください。</p>
+      <p>💾 作った曲は<strong>自動で保存</strong>されます。アプリを閉じても消えません。</p>
+    </div>
+    <button id="helpCloseBtn" class="btn accent big">はじめる!</button>
+  </dialog>
+
+  <script src="app.js"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    }
+  </script>
+</body>
+</html>

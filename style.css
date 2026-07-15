@@ -1,0 +1,321 @@
+/* ============================================
+   かんたんDAW スタイルシート
+   スマホ(Android)とPC(Windows)の両対応
+   ============================================ */
+
+:root {
+  --bg: #12131a;
+  --bg2: #1b1d27;
+  --panel: #22242f;
+  --panel2: #2b2e3c;
+  --text: #eef0f6;
+  --text-dim: #9aa0b4;
+  --accent: #ffb340;
+  --cell: #323545;
+  --cell-beat: #3a3d50;
+  --cell-size: clamp(34px, 6vw, 44px);
+  --label-w: 84px;
+  --radius: 10px;
+
+  /* トラックごとのテーマカラー */
+  --c-drums: #ff6b81;
+  --c-chords: #4ecdc4;
+  --c-bass: #a78bfa;
+  --c-melody: #ffd166;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: "Hiragino Kaku Gothic ProN", "Yu Gothic UI", "Noto Sans JP", "Meiryo", sans-serif;
+  touch-action: manipulation;
+}
+
+/* ---------- ヘッダー ---------- */
+.topbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 18px;
+  padding: 10px 14px;
+  background: var(--bg2);
+  border-bottom: 1px solid #000;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.logo {
+  font-size: 1.05rem;
+  margin: 0;
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+.logo-icon { margin-right: 6px; }
+
+.transport {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+  min-width: 260px;
+}
+
+.play-btn {
+  font-size: 1.05rem;
+  font-weight: 700;
+  padding: 10px 22px;
+  border: none;
+  border-radius: 999px;
+  background: #35d07f;
+  color: #04240f;
+  cursor: pointer;
+  min-width: 110px;
+  transition: transform 0.05s, background 0.15s;
+}
+.play-btn:active { transform: scale(0.96); }
+.play-btn.playing { background: #ff5d5d; color: #2b0505; }
+
+.tempo-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+.tempo-box input[type="range"] { width: clamp(90px, 18vw, 180px); }
+.bpm-value {
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+  font-weight: 700;
+  min-width: 2.4em;
+}
+
+.top-actions { display: flex; gap: 8px; }
+
+/* ---------- ボタン共通 ---------- */
+.btn {
+  background: var(--panel2);
+  color: var(--text);
+  border: 1px solid #3a3d4d;
+  border-radius: var(--radius);
+  padding: 8px 14px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.05s;
+}
+.btn:hover { background: #343849; }
+.btn:active { transform: scale(0.97); }
+.btn.small { padding: 6px 10px; font-size: 0.82rem; }
+.btn.big { padding: 12px 26px; font-size: 1rem; }
+.btn.accent { background: var(--accent); color: #2b1c00; border-color: transparent; font-weight: 700; }
+.btn.accent:hover { background: #ffc266; }
+.btn.danger { background: #4d2a31; border-color: #6e3540; color: #ffb3bd; }
+.btn.danger:hover { background: #5d3038; }
+
+/* ---------- メイン ---------- */
+main { padding: 12px 14px 40px; max-width: 1100px; margin: 0 auto; }
+
+/* ---------- トラックタブ ---------- */
+.track-tabs {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.track-tab {
+  flex: 1;
+  min-width: 90px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text-dim);
+  background: var(--panel);
+  border: 2px solid transparent;
+  border-radius: var(--radius) var(--radius) 0 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.track-tab .dot {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--tab-color, #888);
+  flex: none;
+}
+.track-tab.active {
+  color: var(--text);
+  background: var(--panel2);
+  border-color: var(--tab-color, #888);
+  border-bottom-color: transparent;
+}
+.track-tab.muted { opacity: 0.45; }
+
+/* ---------- トラック操作行 ---------- */
+.track-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px 16px;
+  background: var(--panel2);
+  padding: 10px 14px;
+  border-radius: 0 0 var(--radius) var(--radius);
+  margin-bottom: 12px;
+}
+.track-controls .hint { font-size: 0.82rem; color: var(--text-dim); }
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.85rem;
+  color: var(--text-dim);
+}
+.control-group input[type="range"] { width: clamp(80px, 16vw, 140px); }
+
+select {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid #3a3d4d;
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 0.9rem;
+}
+
+/* ---------- グリッド ---------- */
+.grid-scroller {
+  overflow-x: auto;
+  border-radius: var(--radius);
+  background: var(--panel);
+  padding: 10px;
+}
+
+.grid {
+  display: grid;
+  gap: 3px;
+  width: max-content;
+}
+
+.row-label {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding-right: 10px;
+  width: var(--label-w);
+  height: var(--cell-size);
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  background: var(--panel);
+  white-space: nowrap;
+}
+.row-label.strong { color: var(--text); font-weight: 700; }
+
+.ruler-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--cell-size);
+  height: 22px;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  border-radius: 5px;
+}
+.ruler-cell.beat { color: var(--text); font-weight: 700; }
+.ruler-cell.playing { background: var(--accent); color: #2b1c00; }
+
+.cell {
+  width: var(--cell-size);
+  height: var(--cell-size);
+  border-radius: 7px;
+  background: var(--cell);
+  cursor: pointer;
+  border: none;
+  padding: 0;
+  transition: background 0.08s;
+}
+.cell.beat { background: var(--cell-beat); }
+.cell:hover { filter: brightness(1.25); }
+.cell.on {
+  background: var(--row-color, var(--accent));
+  box-shadow: 0 0 8px color-mix(in srgb, var(--row-color, var(--accent)) 55%, transparent);
+}
+.cell.playing:not(.on) { filter: brightness(1.5); }
+.cell.on.playing { filter: brightness(1.35) saturate(1.2); }
+
+.grid-tip {
+  font-size: 0.82rem;
+  color: var(--text-dim);
+  margin: 10px 2px;
+}
+
+/* ---------- くわしい設定 ---------- */
+.advanced {
+  margin-top: 18px;
+  background: var(--panel);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.advanced summary {
+  padding: 12px 16px;
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text-dim);
+  user-select: none;
+}
+.advanced[open] summary { color: var(--text); border-bottom: 1px solid #33364a; }
+.advanced-body { padding: 14px 16px; display: grid; gap: 12px; }
+.setting-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+}
+.setting-row > label { min-width: 150px; color: var(--text-dim); }
+.setting-row.buttons { gap: 8px; }
+
+/* ---------- 使い方ダイアログ ---------- */
+.help-dialog {
+  max-width: 520px;
+  width: calc(100vw - 40px);
+  border: 1px solid #3a3d4d;
+  border-radius: 16px;
+  background: var(--bg2);
+  color: var(--text);
+  padding: 26px 26px 22px;
+}
+.help-dialog::backdrop { background: rgba(0, 0, 0, 0.65); }
+.help-dialog h2 { margin: 0 0 10px; font-size: 1.2rem; }
+.help-dialog p { color: var(--text-dim); line-height: 1.7; }
+.help-steps { padding-left: 1.3em; display: grid; gap: 10px; line-height: 1.7; }
+.help-steps strong { color: var(--accent); }
+.help-notes {
+  background: var(--panel);
+  border-radius: 10px;
+  padding: 4px 16px;
+  margin: 16px 0;
+  font-size: 0.88rem;
+}
+.help-notes p { margin: 10px 0; }
+#helpCloseBtn { display: block; margin: 0 auto; }
+
+/* ---------- スマホ縦向けの微調整 ---------- */
+@media (max-width: 560px) {
+  :root { --label-w: 64px; }
+  .logo { font-size: 0.95rem; }
+  .topbar { padding: 8px 10px; }
+  main { padding: 10px 10px 40px; }
+  .track-tab { min-width: 72px; font-size: 0.85rem; padding: 10px 6px; }
+  .setting-row > label { min-width: 100%; }
+}
