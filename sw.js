@@ -1,14 +1,28 @@
 /* かんたんDAW Service Worker
    オフラインでも使えるようにファイルをキャッシュする */
-const CACHE_NAME = 'kantan-daw-v1';
+const CACHE_NAME = 'kantan-daw-v2';
 const ASSETS = [
   './',
   './index.html',
   './style.css',
-  './app.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './js/main.js',
+  './js/config.js',
+  './js/state.js',
+  './js/audio/bus.js',
+  './js/audio/scheduler.js',
+  './js/audio/wav.js',
+  './js/ui/grid.js',
+  './js/ui/controls.js',
+  './js/instruments/index.js',
+  './js/instruments/basic-drums.js',
+  './js/instruments/chords.js',
+  './js/instruments/bass.js',
+  './js/instruments/melody.js',
+  './js/instruments/icepad.js',
+  './js/instruments/icesynth.js',
 ];
 
 self.addEventListener('install', (e) => {

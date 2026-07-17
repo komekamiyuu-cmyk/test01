@@ -33,12 +33,11 @@
     <!-- トラック切り替えタブ -->
     <nav class="track-tabs" id="trackTabs"></nav>
 
-    <!-- 選択中トラックの操作(音量・ミュート・音色) -->
+    <!-- 選択中トラックの操作(音量・ミュート・楽器固有の設定) -->
     <div class="track-controls" id="trackControls">
       <span class="hint" id="trackHint"></span>
+      <div class="inst-controls" id="instControls"></div>
       <div class="control-group">
-        <label id="instLabel" for="instSelect" hidden>音色</label>
-        <select id="instSelect" hidden></select>
         <label for="volSlider">音量</label>
         <input type="range" id="volSlider" min="0" max="100" value="80">
         <button id="muteBtn" class="btn small" title="このトラックの音を消す/戻す">🔊</button>
@@ -104,7 +103,7 @@
     <button id="helpCloseBtn" class="btn accent big">はじめる!</button>
   </dialog>
 
-  <script src="app.js"></script>
+  <script type="module" src="js/main.js"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
