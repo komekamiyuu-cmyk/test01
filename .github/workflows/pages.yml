@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - main
+      - claude/windows-android-daw-g39n8d
       - claude/retro-cassette-music-player-3nvs6g
   workflow_dispatch:
 
