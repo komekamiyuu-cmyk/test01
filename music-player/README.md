@@ -18,8 +18,18 @@
 
 ## 🚀 使い方
 
+### 📱 Android で使う(かんたん)
+
+1. このブランチを push すると GitHub Actions が自動で GitHub Pages に公開します
+   (初回のみ: リポジトリの **Settings → Pages → Source** を「**GitHub Actions**」にしてください)
+2. Android の Chrome で `https://<ユーザー名>.github.io/test01/music-player/` を開く
+3. 「🎵 曲ファイルを選ぶ」から端末内の音楽ファイルを選択(Androidはフォルダ選択非対応のため)
+4. メニュー(⋮)→「**ホーム画面に追加**」で、アプリとしてインストールできます(PWA対応・オフライン起動可)
+
+### 💻 PC でローカルに試す
+
 ```bash
-# このフォルダで簡易サーバーを立てる(Python が入っていれば)
+# リポジトリのルートで簡易サーバーを立てる(Python が入っていれば)
 python -m http.server 8000
 # → ブラウザで http://localhost:8000/music-player/ を開く
 ```

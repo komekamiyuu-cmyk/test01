@@ -564,7 +564,9 @@ function toast(msg) {
 
 $('openFolderBtn').onclick = openFolder;
 $('emptyOpenBtn').onclick = openFolder;
+$('emptyFilesBtn').onclick = () => $('filesInput').click();
 $('folderInput').addEventListener('change', (e) => addFiles(e.target.files));
+$('filesInput').addEventListener('change', (e) => addFiles(e.target.files));
 
 document.querySelectorAll('.tab').forEach((tab) => {
   tab.onclick = () => {

@@ -7,6 +7,8 @@
   <meta name="description" content="カセットプレーヤー - ローカルの音楽フォルダを再生するレトロなミュージックプレーヤー">
   <title>カセットプレーヤー</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📼</text></svg>">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,6 +17,7 @@
     <h1 class="logo">📼 カセットプレーヤー</h1>
     <button id="openFolderBtn" class="btn accent">📁 フォルダを開く</button>
     <input type="file" id="folderInput" webkitdirectory multiple hidden>
+    <input type="file" id="filesInput" accept="audio/*,.mp3,.m4a,.aac,.ogg,.oga,.opus,.wav,.flac" multiple hidden>
   </header>
 
   <nav class="tabs" id="tabs">
@@ -30,6 +33,7 @@
       <div class="empty-icon">🎵</div>
       <p>ローカルの音楽フォルダを選ぶと<br>曲が一覧に表示されます</p>
       <button id="emptyOpenBtn" class="btn accent big">📁 音楽フォルダを選ぶ</button>
+      <button id="emptyFilesBtn" class="btn big">🎵 曲ファイルを選ぶ(スマホはこちら)</button>
       <p class="empty-note">対応形式: MP3 / M4A / AAC / OGG / WAV / FLAC</p>
     </div>
     <div id="viewRoot"></div>
@@ -227,5 +231,10 @@
 
   <audio id="audio"></audio>
   <script type="module" src="js/main.js"></script>
+  <script>
+    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    }
+  </script>
 </body>
 </html>
