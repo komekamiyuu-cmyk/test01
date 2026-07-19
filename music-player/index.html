@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0b1220">
+  <meta name="description" content="カセットプレーヤー - ローカルの音楽フォルダを再生するレトロなミュージックプレーヤー">
+  <title>カセットプレーヤー</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📼</text></svg>">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <h1 class="logo">📼 カセットプレーヤー</h1>
+    <button id="openFolderBtn" class="btn accent">📁 フォルダを開く</button>
+    <input type="file" id="folderInput" webkitdirectory multiple hidden>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="albums">アルバム</button>
+    <button class="tab" data-tab="tracks">曲</button>
+    <button class="tab" data-tab="favorites">お気に入り</button>
+    <button class="tab" data-tab="playlists">プレイリスト</button>
+    <button class="tab" data-tab="genres">ジャンル</button>
+  </nav>
+
+  <main id="content" class="content">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🎵</div>
+      <p>ローカルの音楽フォルダを選ぶと<br>曲が一覧に表示されます</p>
+      <button id="emptyOpenBtn" class="btn accent big">📁 音楽フォルダを選ぶ</button>
+      <p class="empty-note">対応形式: MP3 / M4A / AAC / OGG / WAV / FLAC</p>
+    </div>
+    <div id="viewRoot"></div>
+  </main>
+
+  <!-- ミニプレーヤー(画面下部) -->
+  <div class="mini-player hidden" id="miniPlayer">
+    <div class="mini-art" id="miniArt">🎵</div>
+    <div class="mini-info" id="miniInfo">
+      <div class="mini-title" id="miniTitle">-</div>
+      <div class="mini-artist" id="miniArtist">-</div>
+    </div>
+    <button id="miniPrevBtn" class="icon-btn" title="前の曲">⏮</button>
+    <button id="miniPlayBtn" class="icon-btn play" title="再生 / 一時停止">▶</button>
+    <button id="miniNextBtn" class="icon-btn" title="次の曲">⏭</button>
+  </div>
+
+  <!-- 再生中画面(カセットプレーヤー) -->
+  <div class="now-playing hidden" id="nowPlaying">
+    <div class="np-topbar">
+      <button id="npCloseBtn" class="icon-btn" title="閉じる">▼</button>
+      <span class="np-heading">NOW PLAYING</span>
+      <button id="shotBtn" class="icon-btn" title="スクショをSNSにシェア">📸</button>
+    </div>
+
+    <div class="cassette" id="cassette">
+      <div class="c-screw tl"></div><div class="c-screw tr"></div>
+      <div class="c-screw bl"></div><div class="c-screw br"></div>
+      <div class="c-label">
+        <div class="c-label-stripe"></div>
+        <div class="c-label-text">
+          <div class="c-title" id="cTitle">-</div>
+          <div class="c-artist" id="cArtist">-</div>
+        </div>
+        <div class="c-side">A</div>
+      </div>
+      <div class="c-window">
+        <div class="reel-wrap">
+          <div class="spool left" id="spoolL"></div>
+          <div class="hub" id="hubL"></div>
+        </div>
+        <div class="c-window-mid"></div>
+        <div class="reel-wrap">
+          <div class="spool right" id="spoolR"></div>
+          <div class="hub" id="hubR"></div>
+        </div>
+      </div>
+      <div class="c-bottom"></div>
+    </div>
+
+    <div class="np-progress">
+      <span id="curTime" class="np-time">0:00</span>
+      <input type="range" id="seekBar" min="0" max="1000" value="0">
+      <span id="durTime" class="np-time">0:00</span>
+    </div>
+
+    <div class="np-controls">
+      <button id="shuffleBtn" class="icon-btn small" title="シャッフル再生">🔀</button>
+      <button id="npPrevBtn" class="icon-btn" title="前の曲">⏮</button>
+      <button id="npPlayBtn" class="icon-btn play big" title="再生 / 一時停止">▶</button>
+      <button id="npNextBtn" class="icon-btn" title="次の曲">⏭</button>
+      <button id="npFavBtn" class="icon-btn small" title="お気に入り">🤍</button>
+    </div>
+  </div>
+
+  <!-- プレイリスト追加ダイアログ -->
+  <dialog id="plDialog" class="pl-dialog">
+    <h3>プレイリストに追加</h3>
+    <div id="plDialogList" class="pl-dialog-list"></div>
+    <div class="pl-dialog-actions">
+      <button id="plNewBtn" class="btn">➕ 新しいプレイリスト</button>
+      <button id="plCancelBtn" class="btn">キャンセル</button>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <audio id="audio"></audio>
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
