@@ -100,6 +100,7 @@ function startTrack(index) {
   if (!track) return;
   state.qIndex = index;
   track.url ??= URL.createObjectURL(track.file);
+  ensureAnalyser();
   audio.src = track.url;
   audio.play().catch(() => {});
   updatePlayerUI();
@@ -108,6 +109,7 @@ function startTrack(index) {
 
 function togglePlay() {
   if (!current()) return;
+  ensureAnalyser();
   if (audio.paused) audio.play().catch(() => {});
   else audio.pause();
 }
@@ -140,7 +142,7 @@ function toggleShuffle() {
   toast(state.shuffle ? 'シャッフル再生 ON' : 'シャッフル再生 OFF');
 }
 
-audio.addEventListener('play', () => { state.playing = true; updatePlayerUI(); });
+audio.addEventListener('play', () => { state.playing = true; audioCtx?.resume().catch(() => {}); updatePlayerUI(); });
 audio.addEventListener('pause', () => { state.playing = false; updatePlayerUI(); });
 audio.addEventListener('ended', () => next());
 audio.addEventListener('timeupdate', updateProgress);
@@ -409,10 +411,10 @@ function updatePlayerUI() {
   $('cTitle').textContent = t.title;
   $('cArtist').textContent = t.artist;
 
-  const playIcon = state.playing ? '⏸' : '▶';
-  $('miniPlayBtn').textContent = playIcon;
-  $('npPlayBtn').textContent = playIcon;
-  $('cassette').classList.toggle('playing', state.playing);
+  $('miniPlayBtn').textContent = state.playing ? '⏸' : '▶';
+  $('npPlayIco').textContent = state.playing ? '⏸' : '▶';
+  $('npPlayLabel').textContent = state.playing ? 'PAUSE' : 'PLAY';
+  $('npPlayBtn').classList.toggle('down', state.playing);
 
   const fav = state.favorites.has(t.key);
   $('npFavBtn').textContent = fav ? '❤️' : '🤍';
@@ -426,10 +428,97 @@ function updateProgress() {
   if (!seeking) $('seekBar').value = Math.round(p * 1000);
   $('curTime').textContent = fmtTime(audio.currentTime);
   $('durTime').textContent = fmtTime(audio.duration);
-  // テープの巻き量を再生位置に連動させる
-  $('spoolL').style.setProperty('--s', String(0.95 - 0.35 * p));
-  $('spoolR').style.setProperty('--s', String(0.6 + 0.35 * p));
+  // テープの巻き量を再生位置に連動させる(左が減り、右が増える)
+  $('spoolL').setAttribute('r', String(14 + 20 * (1 - p)));
+  $('spoolR').setAttribute('r', String(14 + 20 * p));
+  // テープカウンター
+  $('tapeCounter').textContent = String(Math.floor(audio.currentTime * 1.6) % 1000).padStart(3, '0');
 }
+
+// ---------- リール回転・VUメーター ----------
+
+let audioCtx = null;
+let analyser = null;
+let vuData = null;
+let analyserFailed = false;
+
+// AudioElement を AnalyserNode 経由で鳴らし、VUメーターを実際の音声に反応させる
+function ensureAnalyser() {
+  if (audioCtx || analyserFailed) return;
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const src = audioCtx.createMediaElementSource(audio);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 256;
+    src.connect(analyser);
+    analyser.connect(audioCtx.destination);
+    vuData = new Uint8Array(analyser.fftSize);
+  } catch {
+    analyserFailed = true;
+    audioCtx = null;
+    analyser = null;
+  }
+}
+
+function makeVuBar(el) {
+  const colors = ['#2563eb', '#2563eb', '#3b82f6', '#3b82f6', '#3b82f6', '#60a5fa',
+                  '#60a5fa', '#38bdf8', '#38bdf8', '#f59e0b', '#ef4444', '#ef4444'];
+  for (const c of colors) {
+    const seg = document.createElement('span');
+    seg.className = 'vu-seg';
+    seg.style.setProperty('--seg', c);
+    el.appendChild(seg);
+  }
+}
+makeVuBar($('vuL'));
+makeVuBar($('vuR'));
+
+function lightVuBar(bar, level) {
+  const segs = bar.children;
+  const n = Math.round(level * segs.length);
+  for (let i = 0; i < segs.length; i++) segs[i].classList.toggle('on', i < n);
+}
+
+const vuLevel = { l: 0, r: 0 };
+let reelAngle = { l: 0, r: 0 };
+let lastTick = performance.now();
+
+function tick(now) {
+  const dt = Math.min((now - lastTick) / 1000, 0.1);
+  lastTick = now;
+
+  if (state.playing) {
+    // 線速度一定のテープ → リールの回転はテープ巻き半径に反比例
+    const p = audio.duration ? audio.currentTime / audio.duration : 0;
+    reelAngle.l += (dt * 5200) / (14 + 20 * (1 - p));
+    reelAngle.r += (dt * 5200) / (14 + 20 * p);
+    $('hubL').style.transform = `rotate(${(reelAngle.l % 360).toFixed(1)}deg)`;
+    $('hubR').style.transform = `rotate(${(reelAngle.r % 360).toFixed(1)}deg)`;
+  }
+
+  // VUレベル(音声解析、使えない環境ではランダムで代用)
+  let level = 0;
+  if (state.playing) {
+    if (analyser) {
+      analyser.getByteTimeDomainData(vuData);
+      let sum = 0;
+      for (let i = 0; i < vuData.length; i++) {
+        const v = (vuData[i] - 128) / 128;
+        sum += v * v;
+      }
+      level = Math.min(1, Math.sqrt(sum / vuData.length) * 3);
+    } else {
+      level = 0.35 + 0.35 * Math.random();
+    }
+  }
+  vuLevel.l = Math.max(level, vuLevel.l * 0.9);
+  vuLevel.r = Math.max(Math.min(1, level * (0.86 + 0.22 * Math.abs(Math.sin(now / 310)))), vuLevel.r * 0.9);
+  lightVuBar($('vuL'), vuLevel.l);
+  lightVuBar($('vuR'), vuLevel.r);
+
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
 
 // ---------- スクショ・シェア ----------
 

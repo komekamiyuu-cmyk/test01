@@ -47,7 +47,7 @@
     <button id="miniNextBtn" class="icon-btn" title="次の曲">⏭</button>
   </div>
 
-  <!-- 再生中画面(カセットプレーヤー) -->
+  <!-- 再生中画面(カセットデッキ) -->
   <div class="now-playing hidden" id="nowPlaying">
     <div class="np-topbar">
       <button id="npCloseBtn" class="icon-btn" title="閉じる">▼</button>
@@ -55,29 +55,131 @@
       <button id="shotBtn" class="icon-btn" title="スクショをSNSにシェア">📸</button>
     </div>
 
-    <div class="cassette" id="cassette">
-      <div class="c-screw tl"></div><div class="c-screw tr"></div>
-      <div class="c-screw bl"></div><div class="c-screw br"></div>
-      <div class="c-label">
-        <div class="c-label-stripe"></div>
-        <div class="c-label-text">
-          <div class="c-title" id="cTitle">-</div>
-          <div class="c-artist" id="cArtist">-</div>
-        </div>
-        <div class="c-side">A</div>
-      </div>
-      <div class="c-window">
-        <div class="reel-wrap">
-          <div class="spool left" id="spoolL"></div>
-          <div class="hub" id="hubL"></div>
-        </div>
-        <div class="c-window-mid"></div>
-        <div class="reel-wrap">
-          <div class="spool right" id="spoolR"></div>
-          <div class="hub" id="hubR"></div>
+    <div class="deck">
+      <span class="deck-brand">CP-2000 &nbsp;·&nbsp; STEREO CASSETTE PLAYER</span>
+
+      <div class="deck-meters">
+        <div class="vu"><span class="vu-label">L</span><div class="vu-bar" id="vuL"></div></div>
+        <div class="vu"><span class="vu-label">R</span><div class="vu-bar" id="vuR"></div></div>
+        <div class="counter-box">
+          <span class="counter" id="tapeCounter">000</span>
+          <span class="counter-label">COUNTER</span>
         </div>
       </div>
-      <div class="c-bottom"></div>
+
+      <div class="deck-window">
+        <div class="cassette-wrap" id="cassette">
+          <svg class="cassette-svg" viewBox="0 0 400 252" aria-hidden="true">
+            <defs>
+              <linearGradient id="shellG" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0" stop-color="#2e3f68"/>
+                <stop offset="1" stop-color="#19233f"/>
+              </linearGradient>
+              <radialGradient id="packG">
+                <stop offset="0" stop-color="#5a4330"/>
+                <stop offset="0.72" stop-color="#3a2a1c"/>
+                <stop offset="1" stop-color="#221910"/>
+              </radialGradient>
+              <radialGradient id="screwG" cx="0.35" cy="0.35" r="0.8">
+                <stop offset="0" stop-color="#a7bade"/>
+                <stop offset="1" stop-color="#3f4f76"/>
+              </radialGradient>
+              <clipPath id="winClip"><rect x="102" y="126" width="196" height="68" rx="34"/></clipPath>
+              <clipPath id="labelClip"><rect x="30" y="16" width="340" height="102" rx="8"/></clipPath>
+            </defs>
+
+            <!-- シェル(本体) -->
+            <rect x="2" y="2" width="396" height="248" rx="18" fill="url(#shellG)" stroke="#3d5183" stroke-width="3"/>
+            <line x1="10" y1="205" x2="390" y2="205" stroke="#121b32" stroke-width="2"/>
+            <line x1="10" y1="207" x2="390" y2="207" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+            <!-- ラベル -->
+            <rect x="30" y="16" width="340" height="102" rx="8" fill="#eef2f8"/>
+            <g clip-path="url(#labelClip)">
+              <rect x="30" y="16" width="340" height="22" fill="#3b82f6"/>
+              <rect x="30" y="38" width="340" height="7" fill="#1d4ed8"/>
+              <line x1="48" y1="84" x2="352" y2="84" stroke="#c3cfe2" stroke-width="1.5"/>
+              <line x1="48" y1="106" x2="300" y2="106" stroke="#c3cfe2" stroke-width="1.5"/>
+            </g>
+            <circle cx="347" cy="100" r="11" fill="none" stroke="#1e293b" stroke-width="2.5"/>
+            <text x="347" y="105" text-anchor="middle" font-size="13" font-weight="700" fill="#1e293b" font-family="sans-serif">A</text>
+
+            <!-- テープ窓 -->
+            <rect x="100" y="124" width="200" height="72" rx="36" fill="#0a0f1c" stroke="#3d5183" stroke-width="3"/>
+            <g clip-path="url(#winClip)">
+              <rect x="140" y="155" width="120" height="10" fill="#4a3626"/>
+              <circle id="spoolL" cx="148" cy="160" r="34" fill="url(#packG)"/>
+              <circle id="spoolR" cx="252" cy="160" r="14" fill="url(#packG)"/>
+            </g>
+            <g id="hubL" class="hub-g">
+              <circle cx="148" cy="160" r="17" fill="#dfe6f2" stroke="#a9b7cf" stroke-width="2"/>
+              <circle cx="148" cy="160" r="13.5" fill="none" stroke="#c3cfe2" stroke-width="1"/>
+              <circle cx="148" cy="160" r="9" fill="#0a0f1c"/>
+              <g fill="#dfe6f2">
+                <rect x="146.4" y="151" width="3.2" height="6" rx="1.4" transform="rotate(0 148 160)"/>
+                <rect x="146.4" y="151" width="3.2" height="6" rx="1.4" transform="rotate(60 148 160)"/>
+                <rect x="146.4" y="151" width="3.2" height="6" rx="1.4" transform="rotate(120 148 160)"/>
+                <rect x="146.4" y="151" width="3.2" height="6" rx="1.4" transform="rotate(180 148 160)"/>
+                <rect x="146.4" y="151" width="3.2" height="6" rx="1.4" transform="rotate(240 148 160)"/>
+                <rect x="146.4" y="151" width="3.2" height="6" rx="1.4" transform="rotate(300 148 160)"/>
+              </g>
+            </g>
+            <g id="hubR" class="hub-g">
+              <circle cx="252" cy="160" r="17" fill="#dfe6f2" stroke="#a9b7cf" stroke-width="2"/>
+              <circle cx="252" cy="160" r="13.5" fill="none" stroke="#c3cfe2" stroke-width="1"/>
+              <circle cx="252" cy="160" r="9" fill="#0a0f1c"/>
+              <g fill="#dfe6f2">
+                <rect x="250.4" y="151" width="3.2" height="6" rx="1.4" transform="rotate(0 252 160)"/>
+                <rect x="250.4" y="151" width="3.2" height="6" rx="1.4" transform="rotate(60 252 160)"/>
+                <rect x="250.4" y="151" width="3.2" height="6" rx="1.4" transform="rotate(120 252 160)"/>
+                <rect x="250.4" y="151" width="3.2" height="6" rx="1.4" transform="rotate(180 252 160)"/>
+                <rect x="250.4" y="151" width="3.2" height="6" rx="1.4" transform="rotate(240 252 160)"/>
+                <rect x="250.4" y="151" width="3.2" height="6" rx="1.4" transform="rotate(300 252 160)"/>
+              </g>
+            </g>
+            <path d="M112 130 L176 130 L146 190 L118 190 Z" fill="rgba(255,255,255,0.05)"/>
+
+            <!-- 下部(ヘッド開口部) -->
+            <path d="M118 248 L282 248 L262 208 L138 208 Z" fill="#111a30" stroke="#0d1426" stroke-width="2"/>
+            <circle cx="160" cy="230" r="6" fill="#070b14" stroke="#2a3a5f" stroke-width="1.5"/>
+            <circle cx="240" cy="230" r="6" fill="#070b14" stroke="#2a3a5f" stroke-width="1.5"/>
+            <rect x="182" y="214" width="36" height="16" rx="3" fill="#070b14" stroke="#2a3a5f" stroke-width="1.5"/>
+            <circle cx="140" cy="240" r="4" fill="#070b14"/>
+            <circle cx="260" cy="240" r="4" fill="#070b14"/>
+
+            <!-- ネジ(プラスねじ) -->
+            <g stroke="#22304f" stroke-width="1.4">
+              <circle cx="18" cy="18" r="6" fill="url(#screwG)"/>
+              <line x1="14" y1="18" x2="22" y2="18"/><line x1="18" y1="14" x2="18" y2="22"/>
+              <circle cx="382" cy="18" r="6" fill="url(#screwG)"/>
+              <line x1="378" y1="18" x2="386" y2="18"/><line x1="382" y1="14" x2="382" y2="22"/>
+              <circle cx="18" cy="234" r="6" fill="url(#screwG)"/>
+              <line x1="14" y1="234" x2="22" y2="234"/><line x1="18" y1="230" x2="18" y2="238"/>
+              <circle cx="382" cy="234" r="6" fill="url(#screwG)"/>
+              <line x1="378" y1="234" x2="386" y2="234"/><line x1="382" y1="230" x2="382" y2="238"/>
+              <circle cx="200" cy="239" r="5" fill="url(#screwG)"/>
+              <line x1="196.5" y1="239" x2="203.5" y2="239"/><line x1="200" y1="235.5" x2="200" y2="242.5"/>
+            </g>
+          </svg>
+          <div class="c-label-overlay">
+            <div class="c-title" id="cTitle">-</div>
+            <div class="c-artist" id="cArtist">-</div>
+          </div>
+        </div>
+        <div class="deck-glass"></div>
+      </div>
+
+      <div class="deck-keys">
+        <button class="key" id="npPrevBtn" title="前の曲">
+          <span class="k-ico">⏮</span><span class="k-label">REW</span>
+        </button>
+        <button class="key play" id="npPlayBtn" title="再生 / 一時停止">
+          <span class="k-ico" id="npPlayIco">▶</span><span class="k-label" id="npPlayLabel">PLAY</span>
+        </button>
+        <button class="key" id="npNextBtn" title="次の曲">
+          <span class="k-ico">⏭</span><span class="k-label">FF</span>
+        </button>
+      </div>
     </div>
 
     <div class="np-progress">
@@ -88,9 +190,6 @@
 
     <div class="np-controls">
       <button id="shuffleBtn" class="icon-btn small" title="シャッフル再生">🔀</button>
-      <button id="npPrevBtn" class="icon-btn" title="前の曲">⏮</button>
-      <button id="npPlayBtn" class="icon-btn play big" title="再生 / 一時停止">▶</button>
-      <button id="npNextBtn" class="icon-btn" title="次の曲">⏭</button>
       <button id="npFavBtn" class="icon-btn small" title="お気に入り">🤍</button>
     </div>
   </div>

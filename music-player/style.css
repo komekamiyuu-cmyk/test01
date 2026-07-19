@@ -279,133 +279,146 @@ body {
 }
 .np-heading { letter-spacing: 0.25em; font-size: 0.75rem; color: var(--muted); }
 
-/* ---------- カセットテープ ---------- */
-.cassette {
-  width: min(88vw, 430px);
-  aspect-ratio: 100 / 63;
+/* ---------- カセットデッキ ---------- */
+.deck {
+  width: min(92vw, 470px);
   margin: auto 0;
-  position: relative;
-  background: linear-gradient(180deg, #2b3a60 0%, #1d2947 100%);
-  border: 2px solid #3d5183;
-  border-radius: 14px;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   flex-shrink: 0;
+  background: linear-gradient(180deg, #27355c 0%, #151f3a 100%);
+  border: 2px solid #33456f;
+  border-radius: 22px;
+  padding: 12px 16px 18px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.12);
 }
 
-.c-screw {
-  position: absolute;
-  width: 9px;
+.deck-brand {
+  display: block;
+  text-align: center;
+  font-size: 0.58rem;
+  letter-spacing: 0.22em;
+  color: #7d92bd;
+  margin-bottom: 10px;
+}
+
+/* VUメーター・テープカウンター */
+.deck-meters {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #0b1120;
+  border: 1px solid #22304f;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.vu { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; }
+.vu-label { font-size: 0.6rem; font-weight: 700; color: #7d92bd; }
+.vu-bar { flex: 1; display: flex; gap: 2px; }
+.vu-seg {
+  flex: 1;
   height: 9px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #9db1d8, #45567e 70%);
+  border-radius: 1.5px;
+  background: #1a2745;
+  transition: background 0.05s;
 }
-.c-screw.tl { top: 6px; left: 6px; }
-.c-screw.tr { top: 6px; right: 6px; }
-.c-screw.bl { bottom: 6px; left: 6px; }
-.c-screw.br { bottom: 6px; right: 6px; }
+.vu-seg.on { background: var(--seg, var(--accent)); box-shadow: 0 0 5px var(--seg, var(--accent)); }
 
-.c-label {
-  position: absolute;
-  inset: 7% 6% 46% 6%;
-  background: #eef2f8;
-  border-radius: 6px;
-  overflow: hidden;
-  color: #1e293b;
-}
-.c-label-stripe {
-  height: 26%;
-  background: repeating-linear-gradient(90deg, var(--accent) 0 14px, #2563eb 14px 28px);
-}
-.c-label-text { padding: 4px 12px 0; }
-.c-title {
-  font-size: clamp(0.85rem, 3.6vw, 1.05rem);
+.counter-box { display: flex; flex-direction: column; align-items: center; gap: 1px; }
+.counter {
+  font-family: "Courier New", monospace;
   font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.25em;
+  color: #e6edf7;
+  background: #04070d;
+  border: 1px solid #22304f;
+  border-radius: 4px;
+  padding: 1px 6px 1px 10px;
+}
+.counter-label { font-size: 0.48rem; letter-spacing: 0.2em; color: #7d92bd; }
+
+/* カセット窓 */
+.deck-window {
+  position: relative;
+  background: #0a1120;
+  border: 2px solid #33456f;
+  border-radius: 14px;
+  padding: 10px;
+  box-shadow: inset 0 5px 16px rgba(0, 0, 0, 0.7);
+}
+
+.cassette-wrap { position: relative; filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5)); }
+.cassette-svg { display: block; width: 100%; height: auto; }
+
+.hub-g { transform-box: fill-box; transform-origin: center; }
+
+/* ラベル上の曲名(SVGに重ねるHTML) */
+.c-label-overlay {
+  position: absolute;
+  left: 12%;
+  top: 20%;
+  width: 68%;
+  pointer-events: none;
+}
+.c-title {
+  font-size: clamp(0.8rem, 3.4vw, 1rem);
+  font-weight: 700;
+  color: #1e293b;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .c-artist {
-  font-size: clamp(0.68rem, 2.8vw, 0.8rem);
+  margin-top: 2%;
+  font-size: clamp(0.65rem, 2.6vw, 0.78rem);
   color: #475569;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-.c-side {
+
+/* 窓ガラスの反射 */
+.deck-glass {
   position: absolute;
-  right: 8px;
-  bottom: 6px;
-  width: 20px;
-  height: 20px;
-  border: 2px solid #1e293b;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  font-size: 0.7rem;
-  font-weight: 700;
+  inset: 0;
+  border-radius: 12px;
+  pointer-events: none;
+  background: linear-gradient(115deg,
+    rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.03) 26%, transparent 28%,
+    transparent 60%, rgba(255, 255, 255, 0.04) 62%, transparent 76%);
 }
 
-.c-window {
-  position: absolute;
-  left: 50%;
-  bottom: 14%;
-  transform: translateX(-50%);
-  width: 62%;
-  height: 30%;
-  background: #0a0f1c;
-  border: 2px solid #3d5183;
-  border-radius: 40px;
+/* メカニカルボタン */
+.deck-keys { display: flex; gap: 10px; margin-top: 16px; }
+
+.key {
+  flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: space-between;
-  padding: 0 6%;
+  gap: 3px;
+  padding: 10px 0 7px;
+  background: linear-gradient(180deg, #3c4d78, #243350);
+  border: 1px solid #17203a;
+  border-radius: 7px;
+  color: var(--text);
+  cursor: pointer;
+  box-shadow: 0 5px 0 #0d1630, inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: transform 0.06s, box-shadow 0.06s;
 }
-.c-window-mid { flex: 1; height: 30%; margin: 0 8%; background: rgba(120, 90, 60, 0.55); border-radius: 3px; }
-
-.reel-wrap {
-  position: relative;
-  height: 82%;
-  aspect-ratio: 1;
-  display: grid;
-  place-items: center;
-}
-
-.spool {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: radial-gradient(circle, #4a3626 0%, #2e2117 100%);
-  transform: scale(var(--s, 0.8));
-  transition: transform 0.5s linear;
-}
-
-.hub {
-  position: relative;
-  width: 52%;
-  height: 52%;
-  border-radius: 50%;
-  background: repeating-conic-gradient(#f1f5fb 0 24deg, #8fa3c4 24deg 60deg);
-  border: 3px solid #cbd5e6;
-}
-.cassette.playing .hub { animation: spin 1.8s linear infinite; }
-
-@keyframes spin { to { transform: rotate(360deg); } }
-
-.c-bottom {
-  position: absolute;
-  left: 50%;
-  bottom: 3%;
-  transform: translateX(-50%);
-  width: 40%;
-  height: 7%;
-  background: #131c33;
-  border-radius: 4px;
+.key .k-ico { font-size: 1.15rem; line-height: 1; }
+.key .k-label { font-size: 0.55rem; letter-spacing: 0.18em; color: #9fb2d6; }
+.key.play { background: linear-gradient(180deg, #4f83f0, #2c5cce); }
+.key.play .k-label { color: #dbe7ff; }
+.key:active, .key.down {
+  transform: translateY(4px);
+  box-shadow: 0 1px 0 #0d1630, inset 0 2px 4px rgba(0, 0, 0, 0.35);
 }
 
 /* ---------- 再生中コントロール ---------- */
 .np-progress {
-  width: min(88vw, 430px);
+  width: min(92vw, 470px);
   display: flex;
   align-items: center;
   gap: 10px;
