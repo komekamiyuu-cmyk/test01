@@ -353,26 +353,27 @@ body {
 
 .hub-g { transform-box: fill-box; transform-origin: center; }
 
-/* ラベル上の曲名(SVGに重ねるHTML) */
+/* ステッカーラベル上の曲名(SVGに重ねるHTML) */
 .c-label-overlay {
   position: absolute;
-  left: 12%;
-  top: 20%;
-  width: 68%;
+  left: 24.5%;
+  top: 11.5%;
+  width: 51%;
+  text-align: center;
   pointer-events: none;
 }
 .c-title {
-  font-size: clamp(0.8rem, 3.4vw, 1rem);
+  font-size: clamp(0.72rem, 3vw, 0.92rem);
   font-weight: 700;
-  color: #1e293b;
+  color: #1d4ed8;
+  line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 .c-artist {
-  margin-top: 2%;
-  font-size: clamp(0.65rem, 2.6vw, 0.78rem);
-  color: #475569;
+  font-size: clamp(0.58rem, 2.3vw, 0.7rem);
+  color: #64748b;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

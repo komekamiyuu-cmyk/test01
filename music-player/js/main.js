@@ -429,8 +429,8 @@ function updateProgress() {
   $('curTime').textContent = fmtTime(audio.currentTime);
   $('durTime').textContent = fmtTime(audio.duration);
   // テープの巻き量を再生位置に連動させる(左が減り、右が増える)
-  $('spoolL').setAttribute('r', String(14 + 20 * (1 - p)));
-  $('spoolR').setAttribute('r', String(14 + 20 * p));
+  $('spoolL').setAttribute('r', String(27 + 13 * (1 - p)));
+  $('spoolR').setAttribute('r', String(27 + 13 * p));
   // テープカウンター
   $('tapeCounter').textContent = String(Math.floor(audio.currentTime * 1.6) % 1000).padStart(3, '0');
 }
@@ -490,8 +490,8 @@ function tick(now) {
   if (state.playing) {
     // 線速度一定のテープ → リールの回転はテープ巻き半径に反比例
     const p = audio.duration ? audio.currentTime / audio.duration : 0;
-    reelAngle.l += (dt * 5200) / (14 + 20 * (1 - p));
-    reelAngle.r += (dt * 5200) / (14 + 20 * p);
+    reelAngle.l += (dt * 5200) / (27 + 13 * (1 - p));
+    reelAngle.r += (dt * 5200) / (27 + 13 * p);
     $('hubL').style.transform = `rotate(${(reelAngle.l % 360).toFixed(1)}deg)`;
     $('hubR').style.transform = `rotate(${(reelAngle.r % 360).toFixed(1)}deg)`;
   }
