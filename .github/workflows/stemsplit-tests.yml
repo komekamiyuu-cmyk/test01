@@ -1,0 +1,38 @@
+name: stem-splitter tests
+
+on:
+  push:
+    paths:
+      - "stem-splitter/**"
+      - ".github/workflows/stemsplit-tests.yml"
+  pull_request:
+    paths:
+      - "stem-splitter/**"
+      - ".github/workflows/stemsplit-tests.yml"
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
+    defaults:
+      run:
+        working-directory: stem-splitter
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: 依存関係のインストール
+        # Demucs(torch)は重いので CI では入れず、簡易モードのテストのみ実行する。
+        # Demucs のテストは torch が無ければ自動でスキップされる。
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e ".[dev,mp3]"
+      - name: 動作環境の確認
+        run: stemsplit --check
+      - name: テスト
+        run: pytest -q

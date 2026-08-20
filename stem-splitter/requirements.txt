@@ -1,0 +1,11 @@
+# 最小構成(簡易モードのみ動作)
+numpy>=1.21
+soundfile>=0.12
+
+# 高品質モード(Demucs)を使うなら以下も入れる
+# demucs>=4.0.1
+# torch>=1.13
+# torchaudio>=0.13
+
+# ffmpeg 無しで MP3 を書き出したい場合
+# lameenc>=1.5

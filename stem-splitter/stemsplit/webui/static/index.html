@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ステム分解 — stemsplit</title>
+<link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+<header class="header">
+  <h1>🎚️ ステム分解</h1>
+  <p class="lead">曲を <b>ボーカル / ドラム / ベース / ギター / キーボード</b> などのパートに分けます。</p>
+</header>
+
+<main class="wrap">
+  <section class="panel" id="dropzone">
+    <div class="drop-inner">
+      <div class="drop-icon">🎵</div>
+      <p class="drop-title">ここに曲をドラッグ&ドロップ</p>
+      <p class="drop-sub">mp3 / wav / flac / m4a / ogg（複数まとめてOK）</p>
+      <label class="button">
+        ファイルを選ぶ
+        <input type="file" id="file-input" accept="audio/*" multiple hidden>
+      </label>
+    </div>
+  </section>
+
+  <section class="panel settings">
+    <h2>分け方の設定</h2>
+
+    <div class="field">
+      <label for="model">モデル</label>
+      <select id="model"></select>
+      <p class="hint" id="model-hint"></p>
+    </div>
+
+    <div class="field">
+      <label>出したいパート</label>
+      <div class="chips" id="stem-chips"></div>
+      <p class="hint">何も選ばなければ、このモデルが出せるパートを全部書き出します。</p>
+    </div>
+
+    <div class="field row">
+      <div>
+        <label for="format">ファイル形式</label>
+        <select id="format">
+          <option value="wav">WAV（無圧縮・高音質）</option>
+          <option value="flac">FLAC（可逆圧縮）</option>
+          <option value="mp3">MP3（軽い）</option>
+        </select>
+      </div>
+      <div id="bitrate-wrap" hidden>
+        <label for="bitrate">MP3 ビットレート</label>
+        <select id="bitrate">
+          <option value="320">320 kbps</option>
+          <option value="256">256 kbps</option>
+          <option value="192">192 kbps</option>
+          <option value="128">128 kbps</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="field">
+      <label class="check"><input type="checkbox" id="instrumental"> カラオケ（ボーカル抜き）も作る</label>
+      <label class="check"><input type="checkbox" id="hq"> 高精度モード（時間は約2倍かかります）</label>
+    </div>
+
+    <button class="button primary" id="start" disabled>分解をはじめる</button>
+    <p class="hint" id="queue-hint"></p>
+  </section>
+
+  <section class="panel" id="jobs-panel" hidden>
+    <h2>進行中・完了した曲</h2>
+    <div id="jobs"></div>
+  </section>
+
+  <section class="panel env">
+    <h2>この環境でできること</h2>
+    <ul id="env-list"><li>確認中…</li></ul>
+  </section>
+</main>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

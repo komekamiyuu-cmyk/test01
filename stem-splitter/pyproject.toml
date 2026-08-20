@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "stemsplit"
+version = "0.1.0"
+description = "音楽をボーカル・ドラム・ベース・ギター・キーボードなどのステムに分離するツール"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+dependencies = [
+    "numpy>=1.21",
+    "soundfile>=0.12",
+]
+
+[project.optional-dependencies]
+# 高品質分離(Demucs)を使う場合。CPUでも動くがGPUを強く推奨。
+hq = [
+    "demucs>=4.0.1",
+    "torch>=1.13",
+    "torchaudio>=0.13",
+]
+# MP3書き出しをffmpeg無しで行う場合
+mp3 = ["lameenc>=1.5"]
+dev = ["pytest>=7"]
+
+[project.scripts]
+stemsplit = "stemsplit.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["stemsplit*"]
+
+[tool.setuptools.package-data]
+"stemsplit.webui" = ["static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "slow: 実行に時間がかかるテスト(`pytest -m 'not slow'` で除外できます)",
+]

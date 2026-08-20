@@ -72,6 +72,21 @@ python -m http.server 8000
 - Service Worker + Web App Manifest による PWA(オフライン対応・インストール可能)
 - **楽器はプラグイン方式** — `js/instruments/` に1ファイル追加するだけで新しいトラックが増える設計。詳しくは [ARCHITECTURE.md](ARCHITECTURE.md)
 
+## 🎚️ おまけ: ステム分解ツール（stem-splitter/）
+
+手持ちの曲を **ボーカル / ドラム / ベース / ギター / キーボード** などのパートに
+分解する Python 製ツールを同梱しています（mp3・wav・flac などに対応）。
+
+```bash
+cd stem-splitter
+pip install -e ".[hq]"      # AI分離（Demucs）込みで導入
+stemsplit song.mp3 --stems 6   # 6パートに分解
+stemsplit --web                # ブラウザ画面で使う
+```
+
+詳しくは [stem-splitter/README.md](stem-splitter/README.md) をご覧ください。
+かんたんDAW（ブラウザアプリ）とは独立して動きます。
+
 ## 📁 ファイル構成
 
 ```
@@ -88,6 +103,7 @@ manifest.json     # PWAマニフェスト
 sw.js             # Service Worker(オフラインキャッシュ)
 icons/            # アプリアイコン
 ARCHITECTURE.md   # 設計ドキュメント(メンテナンス・拡張ガイド)
+stem-splitter/    # ステム分解ツール(Python / CLI + ブラウザ画面)
 ```
 
 ## 📄 ライセンス
