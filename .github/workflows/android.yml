@@ -36,6 +36,44 @@ jobs:
         working-directory: android
         run: ./gradlew assembleDebug --no-daemon --stacktrace
 
+      # インストールする前に中身を確かめられるようにする。
+      # ここの出力を読めば、権限・サービス・同梱物・署名が期待通りか分かる。
+      - name: APK の中身を検証
+        working-directory: android
+        run: |
+          set -e
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          echo "::group::基本情報"
+          "$BT/aapt" dump badging "$APK" | grep -E "^(package|application-label|sdkVersion|targetSdkVersion|launchable-activity)" || true
+          echo "APKサイズ: $(du -h "$APK" | cut -f1)"
+          echo "::endgroup::"
+
+          echo "::group::要求している権限"
+          "$BT/aapt" dump permissions "$APK"
+          echo "::endgroup::"
+
+          echo "::group::インターネット権限を持っていないことの確認"
+          if "$BT/aapt" dump permissions "$APK" | grep -q "android.permission.INTERNET"; then
+            echo "NG: INTERNET 権限が入っている"; exit 1
+          else
+            echo "OK: INTERNET 権限なし(通信しない)"
+          fi
+          echo "::endgroup::"
+
+          echo "::group::再生サービスの登録"
+          "$BT/aapt" dump xmltree "$APK" AndroidManifest.xml \
+            | grep -A3 -E "E: (service|provider)" | head -40
+          echo "::endgroup::"
+
+          echo "::group::同梱された画面ファイル"
+          unzip -l "$APK" | grep "assets/web" || (echo "NG: 画面が同梱されていない"; exit 1)
+          echo "::endgroup::"
+
+          echo "::group::署名"
+          "$BT/apksigner" verify --print-certs "$APK" | head -8
+          echo "::endgroup::"
+
       - name: APK をアップロード
         uses: actions/upload-artifact@v4
         with:
