@@ -634,3 +634,10 @@ body {
 }
 
 .hidden { display: none !important; }
+
+/* Androidアプリ版では端末の音楽を自動で読むため、フォルダ選択の導線を出さない */
+.android-only { display: none; }
+body.is-android .android-only { display: block; }
+body.is-android #openFolderBtn,
+body.is-android .empty-actions,
+body.is-android .empty-note:not(.android-only) { display: none; }

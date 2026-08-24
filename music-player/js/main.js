@@ -625,4 +625,56 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
+// ---------- Androidアプリとして動いているときの連携 ----------
+// APK版では端末の音楽ライブラリ(MediaStore)から直接読み込むので、
+// 起動のたびにフォルダを選び直す必要がない。ブラウザで開いた場合はここを丸ごと素通りする。
+
+const android = window.AndroidLibrary;
+
+function loadFromAndroid() {
+  let list = [];
+  try {
+    list = JSON.parse(android.listTracks());
+  } catch {
+    toast('端末の音楽を読み込めませんでした');
+    return;
+  }
+  if (list.length === 0) {
+    toast('端末に音楽が見つかりませんでした');
+    return;
+  }
+  // MediaStore が題名・アーティスト・アルバム・ジャンルまで持っているのでタグ解析は不要
+  state.tracks = list.map((t) => ({ ...t, artUrl: t.artUrl || null, file: null }));
+  toast(`${state.tracks.length} 曲を読み込みました`);
+  render();
+}
+
+// 権限ダイアログの結果を受け取る(MainActivity から呼ばれる)
+window.__onLibraryReady = (granted) => {
+  if (granted) loadFromAndroid();
+  else toast('音楽へのアクセスが許可されていません');
+};
+
+// 戻るキー: 再生中画面が開いていれば閉じ、開いていなければアプリを終了させる
+window.__androidBack = () => {
+  const np = $('nowPlaying');
+  if (!np.classList.contains('hidden')) {
+    np.classList.add('hidden');
+    return true;
+  }
+  if (state.detail) {
+    state.detail = null;
+    render();
+    return true;
+  }
+  return false;
+};
+
+if (android) {
+  // フォルダ選択のボタン類はAndroidでは不要なので隠す
+  document.body.classList.add('is-android');
+  if (android.hasPermission()) loadFromAndroid();
+  else android.requestPermission();
+}
+
 render();

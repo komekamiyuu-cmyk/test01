@@ -49,6 +49,8 @@
         <button id="emptyFilesBtn" class="btn big">曲ファイルを選ぶ(スマホ)</button>
       </div>
       <p class="empty-note">MP3 / M4A / AAC / OGG / WAV / FLAC &nbsp;·&nbsp; ファイルは端末内で処理されます</p>
+      <p class="empty-note android-only">端末の音楽が表示されない場合は、設定 → アプリ → カセット → 権限 から
+        「音楽とオーディオ」を許可してください</p>
     </div>
     <div id="viewRoot"></div>
   </main>
@@ -242,7 +244,8 @@
   <audio id="audio"></audio>
   <script type="module" src="js/main.js"></script>
   <script>
-    if ('serviceWorker' in navigator && location.protocol !== 'file:') {
+    // APK版は画面一式を同梱しているので Service Worker は登録しない
+    if ('serviceWorker' in navigator && location.protocol !== 'file:' && !window.AndroidLibrary) {
       window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
     }
   </script>
