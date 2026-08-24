@@ -38,11 +38,22 @@ object MediaLibrary {
             return base.toTypedArray()
         }
 
+    // 一覧は起動のたびに引き直さず、プロセス内で使い回す(2回目以降の表示を速くする)
+    @Volatile
+    private var cached: String? = null
+
     /**
      * 曲の一覧を JSON 文字列で返す。
      * 画面側はこれをそのまま描画に使う(Web版のトラック構造に合わせてある)。
      */
-    fun listTracksJson(context: Context): String {
+    fun listTracksJson(context: Context, forceRefresh: Boolean = false): String {
+        cached?.let { if (!forceRefresh) return it }
+        val json = query(context)
+        cached = json
+        return json
+    }
+
+    private fun query(context: Context): String {
         val out = JSONArray()
         val collection: Uri =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -80,6 +91,8 @@ object MediaLibrary {
 
                 val o = JSONObject()
                 o.put("key", "media:$id")
+                o.put("id", id)        // 再生はこのIDから content:// を組み立てて行う
+                o.put("albumId", albumId)
                 o.put("title", c.getString(titleCol) ?: "無題")
                 o.put("artist", normalize(c.getString(artistCol), unknownArtist))
                 o.put("album", normalize(c.getString(albumCol), unknownAlbum))

@@ -92,23 +92,49 @@ async function addFiles(files) {
 function playContext(list, index) {
   state.queue = list;
   state.history = [];
+  if (nativePlayer) {
+    // 並びをまとめて渡しておくと、以降の曲送りはロック画面からでも完結する
+    state.qIndex = index;
+    nativePlayer.setQueue(JSON.stringify(list), index);
+    updatePlayerUI();
+    render();
+    return;
+  }
   startTrack(index);
 }
+
+// APK版では音を鳴らすのはネイティブ側(PlaybackService)なので、画面はそれを映すだけになる。
+// ブラウザ版は今まで通り <audio> で鳴らす。両者の差はこの nativePlayer の有無に閉じ込めてある。
+const nativePlayer = window.AndroidPlayer || null;
+let nativeState = { ready: false, playing: false, index: 0, positionMs: 0, durationMs: 0, shuffle: false };
+
+const posSec = () => (nativePlayer ? nativeState.positionMs / 1000 : audio.currentTime);
+const durSec = () => (nativePlayer ? nativeState.durationMs / 1000 : audio.duration);
 
 function startTrack(index) {
   const track = state.queue[index];
   if (!track) return;
   state.qIndex = index;
-  track.url ??= URL.createObjectURL(track.file);
-  ensureAnalyser();
-  audio.src = track.url;
-  audio.play().catch(() => {});
+  if (nativePlayer) {
+    // 並びは既に渡してあるので、移動だけ指示する
+    nativePlayer.seekToIndex(index);
+  } else {
+    track.url ??= URL.createObjectURL(track.file);
+    ensureAnalyser();
+    audio.src = track.url;
+    audio.play().catch(() => {});
+  }
   updatePlayerUI();
   render();
 }
 
 function togglePlay() {
   if (!current()) return;
+  if (nativePlayer) {
+    if (nativeState.playing) nativePlayer.pause();
+    else nativePlayer.play();
+    return;
+  }
   ensureAnalyser();
   if (audio.paused) audio.play().catch(() => {});
   else audio.pause();
@@ -116,6 +142,9 @@ function togglePlay() {
 
 function next() {
   if (state.queue.length === 0) return;
+  // ネイティブ側が並びとシャッフルを持っているので、そちらに任せる
+  // (ロック画面から操作されたときと挙動を揃えるため)
+  if (nativePlayer) { nativePlayer.next(); return; }
   let i;
   if (state.shuffle && state.queue.length > 1) {
     state.history.push(state.qIndex);
@@ -128,6 +157,7 @@ function next() {
 
 function prev() {
   if (state.queue.length === 0) return;
+  if (nativePlayer) { nativePlayer.previous(); return; }
   if (audio.currentTime > 3) { audio.currentTime = 0; return; }
   if (state.shuffle && state.history.length > 0) {
     startTrack(state.history.pop());
@@ -139,8 +169,21 @@ function prev() {
 function toggleShuffle() {
   state.shuffle = !state.shuffle;
   $('shuffleBtn').classList.toggle('on', state.shuffle);
+  if (nativePlayer) nativePlayer.setShuffle(state.shuffle);
   toast(state.shuffle ? 'シャッフル再生 ON' : 'シャッフル再生 OFF');
 }
+
+// ネイティブ側からの状態通知。再生位置・再生中かどうか・今の曲がここで入ってくる
+window.__onPlayerState = (s) => {
+  if (!s || !s.ready) return;
+  nativeState = s;
+  const indexChanged = state.qIndex !== s.index;
+  state.qIndex = s.index;
+  state.playing = s.playing;
+  updatePlayerUI();
+  updateProgress();
+  if (indexChanged) render();
+};
 
 audio.addEventListener('play', () => { state.playing = true; audioCtx?.resume().catch(() => {}); updatePlayerUI(); });
 audio.addEventListener('pause', () => { state.playing = false; updatePlayerUI(); });
@@ -427,15 +470,16 @@ function updatePlayerUI() {
 let seeking = false;
 
 function updateProgress() {
-  const p = audio.duration ? audio.currentTime / audio.duration : 0;
+  const dur = durSec();
+  const p = dur ? posSec() / dur : 0;
   if (!seeking) $('seekBar').value = Math.round(p * 1000);
-  $('curTime').textContent = fmtTime(audio.currentTime);
-  $('durTime').textContent = fmtTime(audio.duration);
+  $('curTime').textContent = fmtTime(posSec());
+  $('durTime').textContent = fmtTime(dur);
   // テープの巻き量を再生位置に連動させる(左が減り、右が増える)
   $('spoolL').setAttribute('r', String(20 + 16 * (1 - p)));
   $('spoolR').setAttribute('r', String(20 + 16 * p));
   // テープカウンター
-  $('tapeCounter').textContent = String(Math.floor(audio.currentTime * 1.6) % 1000).padStart(3, '0');
+  $('tapeCounter').textContent = String(Math.floor(posSec() * 1.6) % 1000).padStart(3, '0');
 }
 
 // ---------- リール回転・VUメーター ----------
@@ -493,7 +537,8 @@ function tick(now) {
 
   if (state.playing) {
     // 線速度一定のテープ → リールの回転はテープ巻き半径に反比例
-    const p = audio.duration ? audio.currentTime / audio.duration : 0;
+    const d = durSec();
+    const p = d ? posSec() / d : 0;
     reelAngle.l += (dt * 4200) / (20 + 16 * (1 - p));
     reelAngle.r += (dt * 4200) / (20 + 16 * p);
     $('hubL').style.transform = `rotate(${(reelAngle.l % 360).toFixed(1)}deg)`;
@@ -530,12 +575,26 @@ async function shareScreenshot() {
   const t = current();
   if (!t) { toast('再生中の曲がありません'); return; }
   toast('画像を作成中…');
-  const p = audio.duration ? audio.currentTime / audio.duration : 0;
+  const d = durSec();
+  const p = d ? posSec() / d : 0;
   const blob = await drawShareCard(t, p, $('tapeCounter').textContent);
   if (!blob) { toast('画像の作成に失敗しました'); return; }
+  const message = `📼 ${t.title} / ${t.artist} を聴いています`;
+
+  // APK版は端末の共有シートへ渡す(WebView には navigator.share もダウンロードも無い)
+  if (window.AndroidLibrary?.shareImage) {
+    const dataUrl = await new Promise((res) => {
+      const r = new FileReader();
+      r.onload = () => res(r.result);
+      r.readAsDataURL(blob);
+    });
+    window.AndroidLibrary.shareImage(dataUrl, message);
+    return;
+  }
+
   const file = new File([blob], 'now-playing.png', { type: 'image/png' });
-  const shareData = { files: [file], text: `📼 ${t.title} / ${t.artist} を聴いています` };
-  if (navigator.canShare && navigator.canShare(shareData)) {
+  const shareData = { files: [file], text: message };
+  if (navigator.canShare?.(shareData)) {
     try {
       await navigator.share(shareData);
       return;
@@ -566,6 +625,8 @@ function showShotDialog(blob) {
 // ---------- トースト ----------
 
 let toastTimer = null;
+window.__toast = (msg) => toast(msg);
+
 function toast(msg) {
   const el = $('toast');
   el.textContent = msg;
@@ -607,7 +668,12 @@ $('shotBtn').onclick = shareScreenshot;
 
 $('seekBar').addEventListener('input', () => { seeking = true; });
 $('seekBar').addEventListener('change', () => {
-  if (audio.duration) audio.currentTime = (Number($('seekBar').value) / 1000) * audio.duration;
+  const f = Number($('seekBar').value) / 1000;
+  if (nativePlayer) {
+    if (nativeState.durationMs) nativePlayer.seekTo(f * nativeState.durationMs);
+  } else if (audio.duration) {
+    audio.currentTime = f * audio.duration;
+  }
   seeking = false;
 });
 

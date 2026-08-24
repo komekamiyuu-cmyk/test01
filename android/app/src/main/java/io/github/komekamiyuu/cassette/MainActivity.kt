@@ -2,9 +2,14 @@ package io.github.komekamiyuu.cassette
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.content.ComponentName
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
+import android.util.Base64
 import android.webkit.JavascriptInterface
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -15,12 +20,20 @@ import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import androidx.media3.common.Player
+import androidx.media3.session.MediaController
+import androidx.media3.session.SessionToken
+import java.io.File
 import java.io.FileInputStream
 import java.io.InputStream
 
 class MainActivity : AppCompatActivity() {
 
     private lateinit var webView: WebView
+
+    private var controller: MediaController? = null
+    private val ticker = Handler(Looper.getMainLooper())
 
     private val audioPermission: String
         get() = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -65,7 +78,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         webView.addJavascriptInterface(Bridge(), "AndroidLibrary")
+        webView.addJavascriptInterface(PlayerBridge(this) { controller }, "AndroidPlayer")
         webView.loadUrl("https://${MediaLibrary.HOST}/web/index.html")
+
+        connectToPlaybackService()
+
+        // 画面の組み立てと並行して曲一覧を読み始める。
+        // JavaScript が listTracks() を呼ぶ頃にはキャッシュ済みになっていて、待ちが出ない。
+        if (ContextCompat.checkSelfPermission(this, audioPermission) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            Thread { MediaLibrary.listTracksJson(this) }.start()
+        }
 
         onBackPressedDispatcher.addCallback(this, object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
@@ -80,8 +104,51 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
+        ticker.removeCallbacksAndMessages(null)
+        controller?.release()
+        controller = null
         webView.destroy()
         super.onDestroy()
+    }
+
+    // ---------- 再生サービスとの接続 ----------
+
+    private fun connectToPlaybackService() {
+        val token = SessionToken(this, ComponentName(this, PlaybackService::class.java))
+        val future = MediaController.Builder(this, token).buildAsync()
+        future.addListener({
+            controller = try {
+                future.get()
+            } catch (e: Exception) {
+                null
+            }
+            controller?.addListener(object : Player.Listener {
+                override fun onEvents(player: Player, events: Player.Events) {
+                    pushState()
+                }
+            })
+            pushState()
+            scheduleTick()
+        }, ContextCompat.getMainExecutor(this))
+    }
+
+    /**
+     * 再生位置は listener では細かく飛んでこないので、再生中だけ一定間隔で画面へ送る。
+     * リールの回転やシークバーがこの値で動く。
+     */
+    private fun scheduleTick() {
+        ticker.removeCallbacksAndMessages(null)
+        ticker.postDelayed(object : Runnable {
+            override fun run() {
+                if (controller?.isPlaying == true) pushState()
+                ticker.postDelayed(this, 250)
+            }
+        }, 250)
+    }
+
+    private fun pushState() {
+        val json = PlayerBridge.stateJson(controller)
+        webView.evaluateJavascript("window.__onPlayerState && window.__onPlayerState($json)", null)
     }
 
     // ---------- WebView からのリクエストを端末内で解決する ----------
@@ -222,5 +289,51 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun listTracks(): String =
             if (hasPermission()) MediaLibrary.listTracksJson(this@MainActivity) else "[]"
+
+        /** 曲を入れ替えた後などに、一覧を取り直す */
+        @JavascriptInterface
+        fun refreshTracks(): String =
+            if (hasPermission()) {
+                MediaLibrary.listTracksJson(this@MainActivity, forceRefresh = true)
+            } else {
+                "[]"
+            }
+
+        /**
+         * 再生中画面のスクショを他アプリへ渡す。
+         * WebView には navigator.share もダウンロードも無いので、ここで肩代わりする。
+         */
+        @JavascriptInterface
+        fun shareImage(dataUrl: String, text: String) {
+            try {
+                val base64 = dataUrl.substringAfter(",", "")
+                if (base64.isEmpty()) return
+                val bytes = Base64.decode(base64, Base64.DEFAULT)
+
+                val dir = File(cacheDir, "share").apply { mkdirs() }
+                val file = File(dir, "now-playing.png")
+                file.writeBytes(bytes)
+
+                val uri = FileProvider.getUriForFile(
+                    this@MainActivity,
+                    "$packageName.fileprovider",
+                    file,
+                )
+                val send = Intent(Intent.ACTION_SEND).apply {
+                    type = "image/png"
+                    putExtra(Intent.EXTRA_STREAM, uri)
+                    putExtra(Intent.EXTRA_TEXT, text)
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                }
+                runOnUiThread { startActivity(Intent.createChooser(send, "シェア")) }
+            } catch (e: Exception) {
+                runOnUiThread {
+                    webView.evaluateJavascript(
+                        "window.__toast && window.__toast('画像を共有できませんでした')",
+                        null,
+                    )
+                }
+            }
+        }
     }
 }
