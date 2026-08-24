@@ -26,8 +26,10 @@
       <button id="addFilesBtn" class="btn primary" title="曲を追加する">＋ 曲を追加</button>
       <button id="openFolderBtn" class="btn desktop-only" title="フォルダごと読み込む">フォルダ</button>
     </div>
-    <input type="file" id="folderInput" webkitdirectory multiple hidden>
-    <input type="file" id="filesInput" accept="audio/*,.mp3,.m4a,.aac,.ogg,.oga,.opus,.wav,.flac,.m4b" multiple hidden>
+    <!-- display:none にすると選択ダイアログが開かない環境があるため、見えないだけの状態にしておく -->
+    <input type="file" id="folderInput" class="offscreen" webkitdirectory multiple>
+    <input type="file" id="filesInput" class="offscreen"
+           accept="audio/*,.mp3,.m4a,.aac,.ogg,.oga,.opus,.wav,.flac,.m4b" multiple>
   </header>
 
   <div class="stripe-band" aria-hidden="true">
@@ -257,6 +259,8 @@
       <button id="shotCloseBtn" class="btn">閉じる</button>
     </div>
   </dialog>
+
+  <div class="drop-hint" id="dropHint">ここに曲やフォルダを<br>ドロップして読み込む</div>
 
   <div id="toast" class="toast hidden"></div>
 

@@ -66,7 +66,7 @@ async function openFolder() {
       if (e.name === 'AbortError' && Date.now() - started > 250) return;
     }
   }
-  $('folderInput').click();
+  openPicker($('folderInput'));
 }
 
 /** フォルダから選んだ場合、親フォルダ名はアルバム名の有力な手がかりになる */
@@ -681,7 +681,81 @@ function toast(msg) {
 
 // ---------- イベント配線 ----------
 
-const pickFiles = () => $('filesInput').click();
+/**
+ * ファイル選択を開く。
+ * 環境によっては選択ダイアログ自体が開けないことがあり、その場合に黙って
+ * 何も起きないと手詰まりになるため、反応が無ければ代わりの手段を案内する。
+ */
+function openPicker(input) {
+  let responded = false;
+  const mark = () => { responded = true; };
+  input.addEventListener('change', mark, { once: true });
+  input.addEventListener('cancel', mark, { once: true });   // ダイアログを閉じた場合
+  window.addEventListener('blur', mark, { once: true });    // ダイアログに焦点が移った場合
+
+  input.click();
+
+  setTimeout(() => {
+    // まだ1曲も読めていないときだけ案内する(通常利用の邪魔をしない)
+    if (!responded && state.tracks.length === 0) {
+      toast('この画面ではファイル選択を開けないようです。曲をドラッグして落とすか、デモ曲をお試しください');
+    }
+  }, 2500);
+}
+
+const pickFiles = () => openPicker($('filesInput'));
+
+// ---------- 投げ込みでの読み込み ----------
+// 選択ダイアログが開けない環境でも、ここから曲を入れられるようにしておく。
+
+/** 投げ込まれた項目がフォルダなら、中のファイルまで辿る */
+async function filesFromEntry(entry, out) {
+  if (!entry) return;
+  if (entry.isFile) {
+    await new Promise((res) => entry.file((f) => { out.push(f); res(); }, res));
+  } else if (entry.isDirectory) {
+    const reader = entry.createReader();
+    for (;;) {
+      const batch = await new Promise((res) => reader.readEntries(res, () => res([])));
+      if (batch.length === 0) break;
+      for (const e of batch) await filesFromEntry(e, out);
+    }
+  }
+}
+
+let dragDepth = 0;
+
+document.addEventListener('dragenter', (e) => {
+  if (![...(e.dataTransfer?.types ?? [])].includes('Files')) return;
+  e.preventDefault();
+  dragDepth++;
+  document.body.classList.add('dragging');
+});
+
+document.addEventListener('dragover', (e) => {
+  if ([...(e.dataTransfer?.types ?? [])].includes('Files')) e.preventDefault();
+});
+
+document.addEventListener('dragleave', () => {
+  if (--dragDepth <= 0) { dragDepth = 0; document.body.classList.remove('dragging'); }
+});
+
+document.addEventListener('drop', async (e) => {
+  if (![...(e.dataTransfer?.types ?? [])].includes('Files')) return;
+  e.preventDefault();
+  dragDepth = 0;
+  document.body.classList.remove('dragging');
+
+  const out = [];
+  const items = [...(e.dataTransfer.items ?? [])];
+  if (items.length && items[0].webkitGetAsEntry) {
+    // フォルダごと投げ込まれた場合にも対応する
+    const entries = items.map((it) => it.webkitGetAsEntry?.()).filter(Boolean);
+    for (const entry of entries) await filesFromEntry(entry, out);
+  }
+  if (out.length === 0) out.push(...e.dataTransfer.files);
+  if (out.length) await addFiles(out);
+});
 
 // デモ曲。ファイル選択が使えない環境でも動作を確かめられるようにするための逃げ道
 $('demoBtn').onclick = async () => {

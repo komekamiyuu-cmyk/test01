@@ -588,6 +588,33 @@ body {
 
 .hidden { display: none !important; }
 
+/* 見えないが「存在はする」状態。display:none だと選択ダイアログを開けない環境がある */
+.offscreen {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  left: 0;
+  top: 0;
+}
+
+/* ---------- ファイルの投げ込み ---------- */
+.drop-hint {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: none;
+  place-items: center;
+  background: rgba(51, 50, 46, 0.82);
+  color: var(--paper);
+  font-family: var(--fd);
+  font-size: 1.3rem;
+  text-align: center;
+  padding: 24px;
+}
+body.dragging .drop-hint { display: grid; }
+
 .top-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
 /* フォルダ選択はスマホのブラウザが対応していないので、対応環境でだけ出す */
