@@ -413,6 +413,21 @@ body {
 .cassette-svg { display: block; width: 100%; height: auto; }
 .hub-g { transform-box: fill-box; transform-origin: center; }
 
+/* ラベル面のジャケット。SVGの枠(x228 y100 58x58 / 全体400x252)にぴたりと重ねる */
+.c-art {
+  position: absolute;
+  left: 57%;
+  top: 46.03%;
+  width: 14.5%;
+  height: 23.02%;
+  object-fit: cover;
+  pointer-events: none;
+}
+/* ジャケットの有無で罫線の出し分けをする */
+.rule-short, .art-frame { display: none; }
+.cassette-wrap.has-art .rule-short, .cassette-wrap.has-art .art-frame { display: block; }
+.cassette-wrap.has-art .rule-full { display: none; }
+
 /* ラベル面に重ねる曲名 */
 .c-label-overlay {
   position: absolute;
@@ -424,12 +439,14 @@ body {
 .c-title {
   font-family: var(--fd);
   font-size: clamp(1rem, 5vw, 1.6rem);
-  line-height: 1.04;
+  line-height: 1.08;
   letter-spacing: -0.03em;
   color: #33322E;
+  /* 長い曲名は2行まで見せる(ラベル面が狭いので1行だとすぐ切れてしまう) */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 .c-artist {
   margin-top: 4px;
@@ -561,9 +578,15 @@ body {
 
 .hidden { display: none !important; }
 
-/* Androidアプリ版では端末の音楽を自動で読むため、フォルダ選択の導線を出さない */
+.top-actions { display: flex; gap: 8px; flex-shrink: 0; }
+
+/* フォルダ選択はスマホのブラウザが対応していないので、対応環境でだけ出す */
+.desktop-only { display: none; }
+body.has-folder-picker .desktop-only { display: inline-block; }
+
+/* Androidアプリ版では端末の音楽を自動で読むため、ファイル選択の導線を出さない */
 .android-only { display: none; }
 body.is-android .android-only { display: block; }
-body.is-android #openFolderBtn,
+body.is-android .top-actions,
 body.is-android .empty-actions,
 body.is-android .empty-note:not(.android-only) { display: none; }

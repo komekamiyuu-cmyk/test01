@@ -33,6 +33,25 @@ function ellipsize(ctx, text, maxW) {
   return text + '…';
 }
 
+/** 指定幅で折り返し、行数を超えた分は最終行を省略記号で締める */
+function wrapLines(ctx, text, maxW, maxLines) {
+  const lines = [];
+  let rest = text || '';
+  while (rest && lines.length < maxLines) {
+    if (ctx.measureText(rest).width <= maxW) { lines.push(rest); rest = ''; break; }
+    let cut = rest.length;
+    while (cut > 1 && ctx.measureText(rest.slice(0, cut)).width > maxW) cut--;
+    if (lines.length === maxLines - 1) {
+      lines.push(ellipsize(ctx, rest, maxW));
+      rest = '';
+    } else {
+      lines.push(rest.slice(0, cut));
+      rest = rest.slice(cut);
+    }
+  }
+  return lines.length ? lines : [''];
+}
+
 const display = (size) => `${size}px 'Archivo Black', 'Arial Black', sans-serif`;
 const util = (size, w = 500) => `${w} ${size}px Oswald, 'Arial Narrow', sans-serif`;
 
@@ -186,29 +205,39 @@ function drawCassette(ctx, track, p, artImg, counter) {
   const lx = 228, lw = 158;
   ctx.fillStyle = INK;
   ctx.font = display(22);
-  ctx.fillText(ellipsize(ctx, track.title, lw), lx, 78);
+  // 曲名は再生中画面と同じく2行まで
+  const lines = wrapLines(ctx, track.title, lw, 2);
+  const firstY = lines.length > 1 ? 62 : 74;
+  lines.forEach((line, i) => ctx.fillText(line, lx, firstY + i * 23));
   ctx.fillStyle = INK2;
   ctx.font = util(11);
   ctx.letterSpacing = '1px';
-  ctx.fillText(ellipsize(ctx, track.artist || 'UNKNOWN ARTIST', lw), lx, 96);
+  ctx.fillText(ellipsize(ctx, track.artist || 'UNKNOWN ARTIST', lw), lx, 100);
   ctx.letterSpacing = '0px';
 
-  // ジャケット(あればラベル面の中段に)
-  if (artImg) {
-    ctx.drawImage(artImg, lx, 106, 36, 36);
-    ctx.strokeStyle = INK;
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(lx, 106, 36, 36);
-  }
-
-  // 罫線束
+  // ジャケットと罫線(再生中画面と同じ配置にする)
   ctx.strokeStyle = INK2;
   ctx.lineWidth = 1.6;
-  for (let i = 0; i < 5; i++) {
-    ctx.beginPath();
-    ctx.moveTo(228, 150 + i * 6);
-    ctx.lineTo(386, 150 + i * 6);
-    ctx.stroke();
+  if (artImg) {
+    ctx.drawImage(artImg, 228, 116, 58, 58);
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 1.6;
+    ctx.strokeRect(228, 116, 58, 58);
+    ctx.strokeStyle = INK2;
+    ctx.lineWidth = 1.6;
+    for (const y of [126, 134, 142, 150, 164]) {
+      ctx.beginPath();
+      ctx.moveTo(296, y);
+      ctx.lineTo(386, y);
+      ctx.stroke();
+    }
+  } else {
+    for (let i = 0; i < 5; i++) {
+      ctx.beginPath();
+      ctx.moveTo(228, 150 + i * 6);
+      ctx.lineTo(386, 150 + i * 6);
+      ctx.stroke();
+    }
   }
 
   // シリアル番号

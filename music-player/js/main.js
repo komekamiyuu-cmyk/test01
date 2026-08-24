@@ -1,5 +1,5 @@
 // カセットプレーヤー — メインロジック
-import { readTags } from './id3.js';
+import { readTags } from './metadata.js';
 import { drawShareCard, serialOf } from './share.js';
 
 const AUDIO_EXT = /\.(mp3|m4a|aac|ogg|oga|opus|wav|flac|weba|webm)$/i;
@@ -60,30 +60,54 @@ async function openFolder() {
   }
 }
 
+/** フォルダから選んだ場合、親フォルダ名はアルバム名の有力な手がかりになる */
+function folderNameOf(file) {
+  const rel = file.webkitRelativePath || '';
+  const parts = rel.split('/').filter(Boolean);
+  return parts.length >= 2 ? parts[parts.length - 2] : '';
+}
+
 async function addFiles(files) {
   const audioFiles = [...files].filter((f) => AUDIO_EXT.test(f.name));
   if (audioFiles.length === 0) { toast('音楽ファイルが見つかりませんでした'); return; }
+
+  const before = state.tracks.length;
   toast(`${audioFiles.length} 曲を読み込み中…`);
 
+  // 同じ曲を二重に登録しないための目印。フォルダ違いの同名ファイルは別物として扱う
   const seen = new Set(state.tracks.map((t) => t.key));
+  let added = 0;
+  let skipped = 0;
+
   for (const file of audioFiles) {
-    const key = file.name;
-    if (seen.has(key)) continue;
+    const key = `${file.webkitRelativePath || ''}|${file.name}|${file.size}`;
+    if (seen.has(key)) { skipped++; continue; }
     seen.add(key);
-    const tags = /\.mp3$/i.test(file.name) ? await readTags(file) : { title: '', artist: '', album: '', genre: '', picture: null };
+
+    const tags = await readTags(file);
     state.tracks.push({
       key,
       file,
       url: null,
       title: tags.title || file.name.replace(/\.[^.]+$/, ''),
       artist: tags.artist || '不明なアーティスト',
-      album: tags.album || '不明なアルバム',
+      // タグが無くても、入っていたフォルダ名が分かればそれをアルバム名にする
+      album: tags.album || folderNameOf(file) || '不明なアルバム',
       genre: tags.genre || '不明',
       artUrl: tags.picture ? URL.createObjectURL(tags.picture) : null,
     });
+    added++;
   }
+
   state.tracks.sort((a, b) => a.album.localeCompare(b.album, 'ja') || a.title.localeCompare(b.title, 'ja'));
-  toast(`${state.tracks.length} 曲を読み込みました`);
+
+  if (added === 0 && skipped > 0) {
+    toast('すでに読み込み済みの曲です');
+  } else if (before > 0) {
+    toast(`${added} 曲を追加しました(合計 ${state.tracks.length} 曲)`);
+  } else {
+    toast(`${state.tracks.length} 曲を読み込みました`);
+  }
   render();
 }
 
@@ -457,6 +481,17 @@ function updatePlayerUI() {
   $('cArtist').textContent = t.artist;
   $('cSerial').textContent = serialOf(t);
 
+  // アルバムのジャケットをカセットのラベル面に貼る
+  const art = $('cArt');
+  if (t.artUrl) {
+    art.src = t.artUrl;
+    art.hidden = false;
+  } else {
+    art.removeAttribute('src');
+    art.hidden = true;
+  }
+  $('cassette').classList.toggle('has-art', !!t.artUrl);
+
   $('miniPlayBtn').textContent = state.playing ? '❚❚' : '▶';
   $('npPlayIco').textContent = state.playing ? '❚❚' : '▶';
   $('npPlayLabel').textContent = state.playing ? 'PAUSE' : 'PLAY';
@@ -637,11 +672,21 @@ function toast(msg) {
 
 // ---------- イベント配線 ----------
 
+const pickFiles = () => $('filesInput').click();
+
+$('addFilesBtn').onclick = pickFiles;
 $('openFolderBtn').onclick = openFolder;
 $('emptyOpenBtn').onclick = openFolder;
-$('emptyFilesBtn').onclick = () => $('filesInput').click();
-$('folderInput').addEventListener('change', (e) => addFiles(e.target.files));
-$('filesInput').addEventListener('change', (e) => addFiles(e.target.files));
+$('emptyFilesBtn').onclick = pickFiles;
+
+// 同じファイルを選び直しても change が発火するよう、読み込み後に選択を空にする
+for (const id of ['folderInput', 'filesInput']) {
+  $(id).addEventListener('change', async (e) => {
+    const files = e.target.files;
+    await addFiles(files);
+    e.target.value = '';
+  });
+}
 
 document.querySelectorAll('.tab').forEach((tab) => {
   tab.onclick = () => {
@@ -736,8 +781,13 @@ window.__androidBack = () => {
   return false;
 };
 
+// フォルダ選択はスマホのブラウザでは機能しないため、PCでだけ「フォルダ」ボタンを出す
+if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+  document.body.classList.add('has-folder-picker');
+}
+
 if (android) {
-  // フォルダ選択のボタン類はAndroidでは不要なので隠す
+  // ファイル選択のボタン類はAndroidアプリ版では不要なので隠す
   document.body.classList.add('is-android');
   if (android.hasPermission()) loadFromAndroid();
   else android.requestPermission();
