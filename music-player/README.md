@@ -90,15 +90,44 @@ python -m http.server 8000
 - Canvas でシェア画像を描画し、Web Share API で共有(非対応環境ではPNGダウンロード)
 - お気に入り・プレイリストは `localStorage` に保存
 
+## 🔧 改造する
+
+見た目もふるまいも、普通のHTML/CSS/JSを書き換えるだけで変えられます。
+**Android版も同じファイルを読んでいる**ので、直せば両方に反映されます。
+
+| やりたいこと | 触るファイル |
+|---|---|
+| 色を変える・書体を変える | `theme.css` だけ。ここの値が画面全体とシェア画像に効きます |
+| 余白・大きさ・配置を変える | `style.css` |
+| カセットの絵を変える | `index.html` のSVG(再生画面)と `js/share.js`(シェア画像)。同じ400×252の座標系なので、片方の数値をもう片方にそのまま移せます |
+| 一覧の並び・タブを変える | `js/main.js` の `render()` |
+| Androidの再生まわりを変える | `android/app/src/main/java/.../PlayerBridge.kt` |
+
+変更後の確認:
+
+```bash
+python -m http.server 8000     # ブラウザ版はこれだけで反映
+cd android && ./gradlew assembleDebug   # APKに反映
+```
+
 ## 📁 ファイル構成
 
 ```
-index.html   # 画面の骨組み + カセットのSVG
-style.css    # デザイントークン(ライト/ダーク両対応)とレイアウト
-fonts.css    # Archivo Black / Oswald を data URI で埋め込み
-js/
-├─ main.js   # 状態管理・画面描画・再生制御
-├─ id3.js    # ID3v2タグの最小パーサー
-└─ share.js  # SNSシェア用スクショ画像のCanvas描画
-manifest.json / sw.js / icons/   # PWA(ホーム画面に追加・オフライン起動)
+music-player/          # 画面(ブラウザ版とAndroid版で共用)
+├─ index.html          # 骨組み + カセットのSVG
+├─ theme.css           # ★ 色と書体の定義(見た目を変えるならまずここ)
+├─ style.css           # レイアウトと部品のスタイル
+├─ fonts.css           # Archivo Black / Oswald を data URI で埋め込み
+├─ js/
+│  ├─ main.js          # 状態管理・画面描画・再生制御
+│  ├─ id3.js           # ID3v2タグの最小パーサー(ブラウザ版で使用)
+│  └─ share.js         # SNSシェア用スクショ画像のCanvas描画
+└─ manifest.json / sw.js / icons/   # PWA(ホーム画面に追加・オフライン起動)
+
+android/               # Androidアプリ(APK)
+└─ app/src/main/java/io/github/komekamiyuu/cassette/
+   ├─ MainActivity.kt     # WebViewの土台・端末内リクエストの解決・共有
+   ├─ MediaLibrary.kt     # MediaStoreから曲一覧を読む
+   ├─ PlaybackService.kt  # バックグラウンド再生とロック画面の操作パネル
+   └─ PlayerBridge.kt     # 画面から再生を操作する窓口
 ```

@@ -41,7 +41,7 @@ val webAppSource = rootProject.layout.projectDirectory.dir("../music-player")
 
 val copyWebApp by tasks.registering(Copy::class) {
     from(webAppSource) {
-        include("index.html", "style.css", "fonts.css", "manifest.json", "js/**", "icons/**")
+        include("index.html", "style.css", "theme.css", "fonts.css", "manifest.json", "js/**", "icons/**")
     }
     into(layout.buildDirectory.dir("generated/webAssets/web"))
 }
