@@ -1,6 +1,6 @@
 // カセットプレーヤー — メインロジック
 import { readTags } from './id3.js';
-import { drawShareCard } from './share.js';
+import { drawShareCard, serialOf } from './share.js';
 
 const AUDIO_EXT = /\.(mp3|m4a|aac|ogg|oga|opus|wav|flac|weba|webm)$/i;
 
@@ -208,23 +208,25 @@ function groupBy(fn) {
   return map;
 }
 
-function trackRow(track, contextList, extras = {}) {
+function trackRow(track, contextList, index, extras = {}) {
   const row = document.createElement('div');
   row.className = 'track-row' + (current()?.key === track.key ? ' current' : '');
-  const art = track.artUrl ? `<img src="${track.artUrl}" alt="">` : '🎵';
+  const art = track.artUrl ? `<img src="${track.artUrl}" alt="">` : '♪';
   row.innerHTML = `
+    <span class="t-index"></span>
     <div class="t-art">${art}</div>
     <div class="t-info">
       <div class="t-title"></div>
       <div class="t-sub"></div>
     </div>`;
+  row.querySelector('.t-index').textContent = String(index + 1).padStart(2, '0');
   row.querySelector('.t-title').textContent = track.title;
   row.querySelector('.t-sub').textContent = `${track.artist} — ${track.album}`;
   row.onclick = () => playContext(contextList, contextList.indexOf(track));
 
   const favBtn = document.createElement('button');
   favBtn.className = 't-btn' + (state.favorites.has(track.key) ? ' faved' : '');
-  favBtn.textContent = state.favorites.has(track.key) ? '❤️' : '🤍';
+  favBtn.textContent = state.favorites.has(track.key) ? '♥' : '♡';
   favBtn.title = 'お気に入り';
   favBtn.onclick = (e) => { e.stopPropagation(); toggleFav(track.key); };
   row.appendChild(favBtn);
@@ -245,7 +247,7 @@ function trackRow(track, contextList, extras = {}) {
   } else {
     const add = document.createElement('button');
     add.className = 't-btn';
-    add.textContent = '➕';
+    add.textContent = '+';
     add.title = 'プレイリストに追加';
     add.onclick = (e) => { e.stopPropagation(); openPlDialog(track.key); };
     row.appendChild(add);
@@ -256,7 +258,7 @@ function trackRow(track, contextList, extras = {}) {
 function trackListEl(tracks, extras = {}) {
   const wrap = document.createElement('div');
   wrap.className = 'track-list';
-  for (const t of tracks) wrap.appendChild(trackRow(t, tracks, extras));
+  tracks.forEach((t, i) => wrap.appendChild(trackRow(t, tracks, i, extras)));
   return wrap;
 }
 
@@ -266,7 +268,7 @@ function sectionHead(title, count, onBack) {
   if (onBack) {
     const back = document.createElement('button');
     back.className = 'btn back-btn';
-    back.textContent = '← 戻る';
+    back.textContent = '◀ 戻る';
     back.onclick = onBack;
     head.appendChild(back);
   }
@@ -275,7 +277,7 @@ function sectionHead(title, count, onBack) {
   head.appendChild(h);
   const c = document.createElement('span');
   c.className = 'count';
-  c.textContent = `${count}曲`;
+  c.textContent = `${String(count).padStart(2, '0')} TRACKS`;
   head.appendChild(c);
   return head;
 }
@@ -314,7 +316,7 @@ function render() {
       const card = document.createElement('div');
       card.className = 'album-card';
       card.innerHTML = `
-        <div class="album-art">${artTrack ? `<img src="${artTrack.artUrl}" alt="">` : '💿'}</div>
+        <div class="album-art">${artTrack ? `<img src="${artTrack.artUrl}" alt="">` : '♪'}</div>
         <div class="album-name"></div>
         <div class="album-artist"></div>`;
       card.querySelector('.album-name').textContent = name;
@@ -330,7 +332,7 @@ function render() {
     const favs = state.tracks.filter((t) => state.favorites.has(t.key));
     root.appendChild(sectionHead('お気に入り', favs.length));
     if (favs.length === 0) {
-      root.insertAdjacentHTML('beforeend', '<p style="color:var(--muted)">曲の 🤍 を押すとここに追加されます</p>');
+      root.insertAdjacentHTML('beforeend', '<p class="hint-text">曲の ♡ を押すとここに追加されます</p>');
     } else {
       root.appendChild(trackListEl(favs));
     }
@@ -341,8 +343,8 @@ function render() {
     h.textContent = 'プレイリスト';
     headWrap.appendChild(h);
     const newBtn = document.createElement('button');
-    newBtn.className = 'btn accent';
-    newBtn.textContent = '➕ 新規作成';
+    newBtn.className = 'btn primary back-btn';
+    newBtn.textContent = '+ 新規作成';
     newBtn.onclick = () => { if (createPlaylist()) render(); };
     headWrap.appendChild(newBtn);
     root.appendChild(headWrap);
@@ -351,17 +353,17 @@ function render() {
     cards.className = 'list-cards';
     const names = Object.keys(state.playlists);
     if (names.length === 0) {
-      root.insertAdjacentHTML('beforeend', '<p style="color:var(--muted)">「新規作成」でプレイリストを作れます</p>');
+      root.insertAdjacentHTML('beforeend', '<p class="hint-text">「新規作成」でプレイリストを作れます</p>');
     }
     for (const name of names) {
       const card = document.createElement('div');
       card.className = 'list-card';
-      card.innerHTML = `<span class="lc-icon">🎶</span><span class="lc-name"></span><span class="lc-count"></span>`;
+      card.innerHTML = `<span class="lc-bar"></span><span class="lc-name"></span><span class="lc-count"></span>`;
       card.querySelector('.lc-name').textContent = name;
-      card.querySelector('.lc-count').textContent = `${state.playlists[name].length}曲`;
+      card.querySelector('.lc-count').textContent = `${String(state.playlists[name].length).padStart(2, '0')} TRACKS`;
       const del = document.createElement('button');
       del.className = 't-btn';
-      del.textContent = '🗑';
+      del.textContent = '✕';
       del.title = 'プレイリストを削除';
       del.onclick = (e) => {
         e.stopPropagation();
@@ -383,9 +385,9 @@ function render() {
     for (const [name, tracks] of groupBy((t) => t.genre)) {
       const card = document.createElement('div');
       card.className = 'list-card';
-      card.innerHTML = `<span class="lc-icon">🏷️</span><span class="lc-name"></span><span class="lc-count"></span>`;
+      card.innerHTML = `<span class="lc-bar"></span><span class="lc-name"></span><span class="lc-count"></span>`;
       card.querySelector('.lc-name').textContent = name;
-      card.querySelector('.lc-count').textContent = `${tracks.length}曲`;
+      card.querySelector('.lc-count').textContent = `${String(tracks.length).padStart(2, '0')} TRACKS`;
       card.onclick = () => { state.detail = { type: 'genre', name }; render(); };
       cards.appendChild(card);
     }
@@ -407,17 +409,18 @@ function updatePlayerUI() {
   $('miniPlayer').classList.remove('hidden');
   $('miniTitle').textContent = t.title;
   $('miniArtist').textContent = t.artist;
-  $('miniArt').innerHTML = t.artUrl ? `<img src="${t.artUrl}" alt="">` : '🎵';
+  $('miniArt').innerHTML = t.artUrl ? `<img src="${t.artUrl}" alt="">` : '♪';
   $('cTitle').textContent = t.title;
   $('cArtist').textContent = t.artist;
+  $('cSerial').textContent = serialOf(t);
 
-  $('miniPlayBtn').textContent = state.playing ? '⏸' : '▶';
-  $('npPlayIco').textContent = state.playing ? '⏸' : '▶';
+  $('miniPlayBtn').textContent = state.playing ? '❚❚' : '▶';
+  $('npPlayIco').textContent = state.playing ? '❚❚' : '▶';
   $('npPlayLabel').textContent = state.playing ? 'PAUSE' : 'PLAY';
   $('npPlayBtn').classList.toggle('down', state.playing);
 
   const fav = state.favorites.has(t.key);
-  $('npFavBtn').textContent = fav ? '❤️' : '🤍';
+  $('npFavBtn').innerHTML = `${fav ? '♥' : '♡'} &nbsp;FAVORITE`;
   $('npFavBtn').classList.toggle('on', fav);
 }
 
@@ -429,8 +432,8 @@ function updateProgress() {
   $('curTime').textContent = fmtTime(audio.currentTime);
   $('durTime').textContent = fmtTime(audio.duration);
   // テープの巻き量を再生位置に連動させる(左が減り、右が増える)
-  $('spoolL').setAttribute('r', String(27 + 13 * (1 - p)));
-  $('spoolR').setAttribute('r', String(27 + 13 * p));
+  $('spoolL').setAttribute('r', String(20 + 16 * (1 - p)));
+  $('spoolR').setAttribute('r', String(20 + 16 * p));
   // テープカウンター
   $('tapeCounter').textContent = String(Math.floor(audio.currentTime * 1.6) % 1000).padStart(3, '0');
 }
@@ -461,8 +464,9 @@ function ensureAnalyser() {
 }
 
 function makeVuBar(el) {
-  const colors = ['#2563eb', '#2563eb', '#3b82f6', '#3b82f6', '#3b82f6', '#60a5fa',
-                  '#60a5fa', '#38bdf8', '#38bdf8', '#f59e0b', '#ef4444', '#ef4444'];
+  // ストライプ帯と同じ暖色の階調(黄 → 橙 → 赤 → 赤紫)
+  const colors = ['#F5B415', '#F5B415', '#F0930E', '#F0930E', '#F07C10', '#F07C10',
+                  '#E2371F', '#E2371F', '#E2371F', '#B32036', '#7B1F42', '#7B1F42'];
   for (const c of colors) {
     const seg = document.createElement('span');
     seg.className = 'vu-seg';
@@ -490,8 +494,8 @@ function tick(now) {
   if (state.playing) {
     // 線速度一定のテープ → リールの回転はテープ巻き半径に反比例
     const p = audio.duration ? audio.currentTime / audio.duration : 0;
-    reelAngle.l += (dt * 5200) / (27 + 13 * (1 - p));
-    reelAngle.r += (dt * 5200) / (27 + 13 * p);
+    reelAngle.l += (dt * 4200) / (20 + 16 * (1 - p));
+    reelAngle.r += (dt * 4200) / (20 + 16 * p);
     $('hubL').style.transform = `rotate(${(reelAngle.l % 360).toFixed(1)}deg)`;
     $('hubR').style.transform = `rotate(${(reelAngle.r % 360).toFixed(1)}deg)`;
   }
@@ -527,7 +531,7 @@ async function shareScreenshot() {
   if (!t) { toast('再生中の曲がありません'); return; }
   toast('画像を作成中…');
   const p = audio.duration ? audio.currentTime / audio.duration : 0;
-  const blob = await drawShareCard(t, p);
+  const blob = await drawShareCard(t, p, $('tapeCounter').textContent);
   if (!blob) { toast('画像の作成に失敗しました'); return; }
   const file = new File([blob], 'now-playing.png', { type: 'image/png' });
   const shareData = { files: [file], text: `📼 ${t.title} / ${t.artist} を聴いています` };

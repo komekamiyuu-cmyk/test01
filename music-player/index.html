@@ -3,22 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#0b1220">
+  <meta name="theme-color" content="#E8E2D5">
   <meta name="description" content="カセットプレーヤー - ローカルの音楽フォルダを再生するレトロなミュージックプレーヤー">
   <title>カセットプレーヤー</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📼</text></svg>">
   <link rel="manifest" href="manifest.json">
   <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="fonts.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
   <header class="topbar">
-    <h1 class="logo">📼 カセットプレーヤー</h1>
-    <button id="openFolderBtn" class="btn accent">📁 フォルダを開く</button>
+    <div class="brand">
+      <span class="brand-mark">▶</span>
+      <span class="brand-name">CASSETTE</span>
+      <span class="brand-sub">AUDIO PLAYER / TYPE-Ⅰ</span>
+    </div>
+    <button id="openFolderBtn" class="btn primary">フォルダを開く</button>
     <input type="file" id="folderInput" webkitdirectory multiple hidden>
     <input type="file" id="filesInput" accept="audio/*,.mp3,.m4a,.aac,.ogg,.oga,.opus,.wav,.flac" multiple hidden>
   </header>
+
+  <div class="stripe-band" aria-hidden="true">
+    <i style="--c:#F5B415"></i><i style="--c:#F0930E"></i><i style="--c:#F07C10"></i>
+    <i style="--c:#E2371F"></i><i style="--c:#B32036"></i><i style="--c:#7B1F42"></i>
+  </div>
 
   <nav class="tabs" id="tabs">
     <button class="tab active" data-tab="albums">アルバム</button>
@@ -30,38 +40,39 @@
 
   <main id="content" class="content">
     <div class="empty-state" id="emptyState">
-      <div class="empty-icon">🎵</div>
-      <p>ローカルの音楽フォルダを選ぶと<br>曲が一覧に表示されます</p>
-      <button id="emptyOpenBtn" class="btn accent big">📁 音楽フォルダを選ぶ</button>
-      <button id="emptyFilesBtn" class="btn big">🎵 曲ファイルを選ぶ(スマホはこちら)</button>
-      <p class="empty-note">対応形式: MP3 / M4A / AAC / OGG / WAV / FLAC</p>
+      <div class="empty-rule"></div>
+      <p class="empty-kicker">NO TAPE LOADED</p>
+      <h2 class="empty-title">音楽フォルダを<br>読み込んでください</h2>
+      <div class="empty-actions">
+        <button id="emptyOpenBtn" class="btn primary big">フォルダを選ぶ</button>
+        <button id="emptyFilesBtn" class="btn big">曲ファイルを選ぶ(スマホ)</button>
+      </div>
+      <p class="empty-note">MP3 / M4A / AAC / OGG / WAV / FLAC &nbsp;·&nbsp; ファイルは端末内で処理されます</p>
     </div>
     <div id="viewRoot"></div>
   </main>
 
   <!-- ミニプレーヤー(画面下部) -->
   <div class="mini-player hidden" id="miniPlayer">
-    <div class="mini-art" id="miniArt">🎵</div>
+    <div class="mini-art" id="miniArt">♪</div>
     <div class="mini-info" id="miniInfo">
       <div class="mini-title" id="miniTitle">-</div>
       <div class="mini-artist" id="miniArtist">-</div>
     </div>
-    <button id="miniPrevBtn" class="icon-btn" title="前の曲">⏮</button>
+    <button id="miniPrevBtn" class="icon-btn" title="前の曲">◀◀</button>
     <button id="miniPlayBtn" class="icon-btn play" title="再生 / 一時停止">▶</button>
-    <button id="miniNextBtn" class="icon-btn" title="次の曲">⏭</button>
+    <button id="miniNextBtn" class="icon-btn" title="次の曲">▶▶</button>
   </div>
 
-  <!-- 再生中画面(カセットデッキ) -->
+  <!-- 再生中画面 -->
   <div class="now-playing hidden" id="nowPlaying">
     <div class="np-topbar">
       <button id="npCloseBtn" class="icon-btn" title="閉じる">▼</button>
       <span class="np-heading">NOW PLAYING</span>
-      <button id="shotBtn" class="icon-btn" title="スクショをSNSにシェア">📸</button>
+      <button id="shotBtn" class="icon-btn" title="スクショをSNSにシェア">SHARE</button>
     </div>
 
     <div class="deck">
-      <span class="deck-brand">CP-2000 &nbsp;·&nbsp; STEREO CASSETTE PLAYER</span>
-
       <div class="deck-meters">
         <div class="vu"><span class="vu-label">L</span><div class="vu-bar" id="vuL"></div></div>
         <div class="vu"><span class="vu-label">R</span><div class="vu-bar" id="vuR"></div></div>
@@ -71,136 +82,123 @@
         </div>
       </div>
 
-      <div class="deck-window">
-        <div class="cassette-wrap" id="cassette">
-          <svg class="cassette-svg" viewBox="0 0 400 252" aria-hidden="true">
-            <defs>
-              <radialGradient id="packG">
-                <stop offset="0" stop-color="#181310"/>
-                <stop offset="0.75" stop-color="#0e0b09"/>
-                <stop offset="1" stop-color="#050404"/>
-              </radialGradient>
-              <linearGradient id="tintG" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stop-color="#48b2de"/>
-                <stop offset="1" stop-color="#1f7bb0"/>
-              </linearGradient>
-              <radialGradient id="screwG" cx="0.35" cy="0.35" r="0.8">
-                <stop offset="0" stop-color="#bfe4f5"/>
-                <stop offset="1" stop-color="#31708f"/>
-              </radialGradient>
-              <clipPath id="shellClip"><rect x="2" y="2" width="396" height="248" rx="16"/></clipPath>
-            </defs>
+      <div class="cassette-wrap" id="cassette">
+        <svg class="cassette-svg" viewBox="0 0 400 252" aria-hidden="true">
+          <defs>
+            <clipPath id="winClip"><rect x="44" y="84" width="156" height="88" rx="44"/></clipPath>
+            <clipPath id="tagClip"><rect x="286" y="18" width="100" height="22"/></clipPath>
+          </defs>
 
-            <!-- 内部(スケルトンシェル越しに見えるメカ) -->
-            <rect x="2" y="2" width="396" height="248" rx="16" fill="#1e3d59"/>
-            <g clip-path="url(#shellClip)">
-              <!-- テープの巻き(左右のパック) -->
-              <circle id="spoolL" cx="142" cy="140" r="40" fill="url(#packG)"/>
-              <circle id="spoolR" cx="258" cy="140" r="27" fill="url(#packG)"/>
-              <!-- 下端を走るテープとガイドローラー -->
-              <circle cx="78" cy="192" r="5" fill="#1c2a3e"/>
-              <circle cx="322" cy="192" r="5" fill="#1c2a3e"/>
-              <rect x="78" y="197" width="244" height="5" fill="#1a1310"/>
+          <!-- シェル(メカ部) -->
+          <rect x="0" y="0" width="400" height="252" rx="10" fill="#3A3936"/>
+          <!-- リブ(成形の凹凸) -->
+          <g stroke="#4A4844" stroke-width="2">
+            <line x1="52" y1="20" x2="196" y2="20"/>
+            <line x1="52" y1="28" x2="196" y2="28"/>
+            <line x1="52" y1="226" x2="196" y2="226"/>
+            <line x1="52" y1="234" x2="196" y2="234"/>
+          </g>
+          <!-- 縦組みテキスト -->
+          <text x="30" y="212" fill="#6B6862" font-size="10" font-family="Oswald, sans-serif"
+                letter-spacing="3" transform="rotate(-90 30 212)">COMPACT CASSETTE</text>
+
+          <!-- テープ窓(淡いシアンの覗き窓) -->
+          <rect x="44" y="84" width="156" height="88" rx="44" fill="#C8DDE0"/>
+          <g clip-path="url(#winClip)">
+            <!-- オレンジのブロック -->
+            <rect x="52" y="84" width="19" height="88" fill="#EE3B12"/>
+            <rect x="84" y="124" width="76" height="8" fill="#2B2A27"/>
+            <circle id="spoolL" cx="84" cy="128" r="36" fill="#2B2A27"/>
+            <circle id="spoolR" cx="160" cy="128" r="20" fill="#2B2A27"/>
+          </g>
+          <!-- ハブ(回転) -->
+          <g id="hubL" class="hub-g">
+            <circle cx="84" cy="128" r="13" fill="#98958E"/>
+            <circle cx="84" cy="128" r="6" fill="#2B2A27"/>
+            <g fill="#2B2A27">
+              <rect x="82.6" y="115.5" width="2.8" height="5.5" transform="rotate(0 84 128)"/>
+              <rect x="82.6" y="115.5" width="2.8" height="5.5" transform="rotate(60 84 128)"/>
+              <rect x="82.6" y="115.5" width="2.8" height="5.5" transform="rotate(120 84 128)"/>
+              <rect x="82.6" y="115.5" width="2.8" height="5.5" transform="rotate(180 84 128)"/>
+              <rect x="82.6" y="115.5" width="2.8" height="5.5" transform="rotate(240 84 128)"/>
+              <rect x="82.6" y="115.5" width="2.8" height="5.5" transform="rotate(300 84 128)"/>
             </g>
-
-            <!-- 半透明ブルーのシェル(スケルトン) -->
-            <rect x="2" y="2" width="396" height="248" rx="16" fill="url(#tintG)" opacity="0.42"/>
-            <rect x="2" y="2" width="396" height="248" rx="16" fill="none" stroke="#8fd7f2" stroke-width="2.5" opacity="0.85"/>
-            <rect x="8" y="8" width="384" height="236" rx="12" fill="none" stroke="rgba(255,255,255,0.16)" stroke-width="1"/>
-            <line x1="10" y1="200" x2="390" y2="200" stroke="rgba(8,20,38,0.5)" stroke-width="2"/>
-
-            <!-- 白いハブリングと連結バー -->
-            <rect x="142" y="131" width="116" height="18" rx="9" fill="#f4f7fb"/>
-            <text x="200" y="143.5" text-anchor="middle" font-size="6.5" font-weight="700" letter-spacing="0.5" fill="#2e93c9" font-family="sans-serif">PRECISION MECH.</text>
-            <circle cx="142" cy="140" r="25" fill="#f4f7fb" stroke="#cfd9e6" stroke-width="1.5"/>
-            <circle cx="258" cy="140" r="25" fill="#f4f7fb" stroke="#cfd9e6" stroke-width="1.5"/>
-
-            <!-- ハブ(回転する歯付きスピンドル穴) -->
-            <g id="hubL" class="hub-g">
-              <circle cx="142" cy="140" r="15" fill="#0a0f1c" stroke="#93a1b3" stroke-width="1.5"/>
-              <g fill="#b9c2cf">
-                <rect x="140.4" y="126" width="3.2" height="6.5" rx="1.3" transform="rotate(0 142 140)"/>
-                <rect x="140.4" y="126" width="3.2" height="6.5" rx="1.3" transform="rotate(60 142 140)"/>
-                <rect x="140.4" y="126" width="3.2" height="6.5" rx="1.3" transform="rotate(120 142 140)"/>
-                <rect x="140.4" y="126" width="3.2" height="6.5" rx="1.3" transform="rotate(180 142 140)"/>
-                <rect x="140.4" y="126" width="3.2" height="6.5" rx="1.3" transform="rotate(240 142 140)"/>
-                <rect x="140.4" y="126" width="3.2" height="6.5" rx="1.3" transform="rotate(300 142 140)"/>
-              </g>
-              <circle cx="142" cy="140" r="5.5" fill="#05080f"/>
+          </g>
+          <g id="hubR" class="hub-g">
+            <circle cx="160" cy="128" r="13" fill="#98958E"/>
+            <circle cx="160" cy="128" r="6" fill="#2B2A27"/>
+            <g fill="#2B2A27">
+              <rect x="158.6" y="115.5" width="2.8" height="5.5" transform="rotate(0 160 128)"/>
+              <rect x="158.6" y="115.5" width="2.8" height="5.5" transform="rotate(60 160 128)"/>
+              <rect x="158.6" y="115.5" width="2.8" height="5.5" transform="rotate(120 160 128)"/>
+              <rect x="158.6" y="115.5" width="2.8" height="5.5" transform="rotate(180 160 128)"/>
+              <rect x="158.6" y="115.5" width="2.8" height="5.5" transform="rotate(240 160 128)"/>
+              <rect x="158.6" y="115.5" width="2.8" height="5.5" transform="rotate(300 160 128)"/>
             </g>
-            <g id="hubR" class="hub-g">
-              <circle cx="258" cy="140" r="15" fill="#0a0f1c" stroke="#93a1b3" stroke-width="1.5"/>
-              <g fill="#b9c2cf">
-                <rect x="256.4" y="126" width="3.2" height="6.5" rx="1.3" transform="rotate(0 258 140)"/>
-                <rect x="256.4" y="126" width="3.2" height="6.5" rx="1.3" transform="rotate(60 258 140)"/>
-                <rect x="256.4" y="126" width="3.2" height="6.5" rx="1.3" transform="rotate(120 258 140)"/>
-                <rect x="256.4" y="126" width="3.2" height="6.5" rx="1.3" transform="rotate(180 258 140)"/>
-                <rect x="256.4" y="126" width="3.2" height="6.5" rx="1.3" transform="rotate(240 258 140)"/>
-                <rect x="256.4" y="126" width="3.2" height="6.5" rx="1.3" transform="rotate(300 258 140)"/>
-              </g>
-              <circle cx="258" cy="140" r="5.5" fill="#05080f"/>
+          </g>
+
+          <!-- ヘッド開口部 -->
+          <path d="M62 252 L182 252 L170 206 L74 206 Z" fill="#2B2A27"/>
+          <circle cx="96" cy="232" r="6" fill="#141413"/>
+          <circle cx="148" cy="232" r="6" fill="#141413"/>
+          <rect x="112" y="214" width="20" height="12" fill="#141413"/>
+
+          <!-- 赤いネジ -->
+          <g>
+            <circle cx="20" cy="20" r="8" fill="#2B2A27"/><circle cx="20" cy="20" r="4.5" fill="#EE3B12"/>
+            <circle cx="20" cy="232" r="8" fill="#2B2A27"/><circle cx="20" cy="232" r="4.5" fill="#EE3B12"/>
+          </g>
+
+          <!-- ラベル面(切り欠き付き) -->
+          <path d="M214 0 L390 0 Q400 0 400 10 L400 242 Q400 252 390 252 L214 252 L214 146 Q204 138 214 128 Z" fill="#E8E2D5"/>
+
+          <!-- タグ + ハッチング -->
+          <rect x="228" y="18" width="34" height="22" fill="#EE3B12"/>
+          <text x="245" y="34" text-anchor="middle" fill="#E8E2D5" font-size="13" font-weight="700" font-family="'Archivo Black', sans-serif">CP</text>
+          <text x="228" y="13" fill="#5C5A54" font-size="6" letter-spacing="1.1" font-family="Oswald, sans-serif">PLAYER SYSTEM</text>
+          <circle cx="272" cy="34" r="3.5" fill="#33322E"/>
+          <g clip-path="url(#tagClip)">
+            <g fill="#EE3B12">
+              <rect x="286" y="10" width="13" height="38" transform="skewX(-20)"/>
+              <rect x="308" y="10" width="13" height="38" transform="skewX(-20)"/>
+              <rect x="330" y="10" width="13" height="38" transform="skewX(-20)"/>
+              <rect x="352" y="10" width="13" height="38" transform="skewX(-20)"/>
             </g>
+          </g>
 
-            <!-- 白いステッカーラベル(曲名はHTMLで重ねる) -->
-            <rect x="92" y="27" width="216" height="46" rx="5" fill="rgba(0,0,0,0.25)"/>
-            <rect x="92" y="26" width="216" height="46" rx="5" fill="#fdfefe" stroke="#d7dde6" stroke-width="1"/>
+          <!-- 罫線束 -->
+          <g stroke="#5C5A54" stroke-width="1.6">
+            <line x1="228" y1="150" x2="386" y2="150"/>
+            <line x1="228" y1="156" x2="386" y2="156"/>
+            <line x1="228" y1="162" x2="386" y2="162"/>
+            <line x1="228" y1="168" x2="386" y2="168"/>
+            <line x1="228" y1="174" x2="386" y2="174"/>
+          </g>
 
-            <!-- シェルに直接印刷された文字 -->
-            <g font-family="sans-serif" fill="#dff4fc">
-              <text x="54" y="44" text-anchor="middle" font-size="12" font-style="italic" font-weight="700" opacity="0.95">60 min</text>
-              <text x="378" y="44" text-anchor="end" font-size="12" font-style="italic" font-weight="700">BLUETAPE</text>
-              <text x="200" y="88" text-anchor="middle" font-size="6.5" letter-spacing="0.4" opacity="0.85">TYPE Ⅰ ( NORMAL ) POSITION&#160;&#160;·&#160;&#160;NORMAL BIAS 120μs EQ</text>
-              <text x="378" y="124" text-anchor="end" font-size="9" font-weight="700" letter-spacing="0.6">SIDE-A</text>
-              <text x="388" y="194" text-anchor="end" font-size="11" font-style="italic" font-weight="700">B·tune <tspan font-size="13">60</tspan></text>
-            </g>
-            <path d="M96 97 L168 93 L174 100 L232 95" fill="none" stroke="#8fd7f2" stroke-width="1" opacity="0.45"/>
-            <text x="34" y="242" font-size="24" font-weight="700" fill="#071522" opacity="0.85" font-family="sans-serif">A</text>
+          <!-- シリアル番号 -->
+          <text x="228" y="192" fill="#EE3B12" font-size="8" font-weight="600" letter-spacing="1.3" font-family="Oswald, sans-serif">SERIAL NUMBER</text>
+          <text id="cSerial" x="228" y="204" fill="#EE3B12" font-size="8.5" letter-spacing="1" font-family="Oswald, sans-serif">SBZR-0000-CA30</text>
 
-            <!-- 下部(ヘッド開口部) -->
-            <path d="M110 246 L290 246 L272 204 L128 204 Z" fill="#16344e" opacity="0.9" stroke="rgba(120,200,235,0.3)" stroke-width="1.5"/>
-            <circle cx="156" cy="228" r="5.5" fill="#060b14" stroke="#2a4a66" stroke-width="1.5"/>
-            <circle cx="244" cy="228" r="5.5" fill="#060b14" stroke="#2a4a66" stroke-width="1.5"/>
-            <rect x="183" y="210" width="34" height="14" rx="2" fill="#060b14" stroke="#2a4a66" stroke-width="1.5"/>
-            <circle cx="132" cy="238" r="3.5" fill="#060b14"/>
-            <circle cx="268" cy="238" r="3.5" fill="#060b14"/>
-
-            <!-- プラスチックの艶(斜めのハイライト) -->
-            <g clip-path="url(#shellClip)">
-              <path d="M52 2 L118 2 L64 250 L26 250 Z" fill="rgba(255,255,255,0.07)"/>
-              <path d="M132 2 L156 2 L102 250 L88 250 Z" fill="rgba(255,255,255,0.04)"/>
-            </g>
-
-            <!-- ネジ(プラスねじ) -->
-            <g stroke="#173a52" stroke-width="1.4">
-              <circle cx="16" cy="16" r="5.5" fill="url(#screwG)"/>
-              <line x1="12.5" y1="16" x2="19.5" y2="16"/><line x1="16" y1="12.5" x2="16" y2="19.5"/>
-              <circle cx="384" cy="16" r="5.5" fill="url(#screwG)"/>
-              <line x1="380.5" y1="16" x2="387.5" y2="16"/><line x1="384" y1="12.5" x2="384" y2="19.5"/>
-              <circle cx="16" cy="236" r="5.5" fill="url(#screwG)"/>
-              <line x1="12.5" y1="236" x2="19.5" y2="236"/><line x1="16" y1="232.5" x2="16" y2="239.5"/>
-              <circle cx="384" cy="236" r="5.5" fill="url(#screwG)"/>
-              <line x1="380.5" y1="236" x2="387.5" y2="236"/><line x1="384" y1="232.5" x2="384" y2="239.5"/>
-              <circle cx="200" cy="235" r="4.5" fill="url(#screwG)"/>
-              <line x1="197" y1="235" x2="203" y2="235"/><line x1="200" y1="232" x2="200" y2="238"/>
-            </g>
-          </svg>
-          <div class="c-label-overlay">
-            <div class="c-title" id="cTitle">-</div>
-            <div class="c-artist" id="cArtist">-</div>
-          </div>
+          <!-- SIDE A + 巨大数字 -->
+          <text x="386" y="242" text-anchor="end" fill="#33322E" opacity="0.22" font-size="52" font-family="'Archivo Black', sans-serif">A</text>
+          <text x="228" y="240" fill="#33322E" font-size="11" font-weight="600" letter-spacing="2" font-family="Oswald, sans-serif">SIDE A</text>
+          <path d="M300 228 L316 228 L308 240 Z" fill="#EE3B12"/>
+        </svg>
+        <div class="c-label-overlay">
+          <div class="c-title" id="cTitle">-</div>
+          <div class="c-artist" id="cArtist">-</div>
         </div>
-        <div class="deck-glass"></div>
       </div>
 
       <div class="deck-keys">
         <button class="key" id="npPrevBtn" title="前の曲">
-          <span class="k-ico">⏮</span><span class="k-label">REW</span>
+          <span class="k-ico">◀◀</span><span class="k-label">REW</span>
         </button>
         <button class="key play" id="npPlayBtn" title="再生 / 一時停止">
           <span class="k-ico" id="npPlayIco">▶</span><span class="k-label" id="npPlayLabel">PLAY</span>
         </button>
         <button class="key" id="npNextBtn" title="次の曲">
-          <span class="k-ico">⏭</span><span class="k-label">FF</span>
+          <span class="k-ico">▶▶</span><span class="k-label">FF</span>
         </button>
       </div>
     </div>
@@ -212,8 +210,8 @@
     </div>
 
     <div class="np-controls">
-      <button id="shuffleBtn" class="icon-btn small" title="シャッフル再生">🔀</button>
-      <button id="npFavBtn" class="icon-btn small" title="お気に入り">🤍</button>
+      <button id="shuffleBtn" class="toggle" title="シャッフル再生">SHUFFLE</button>
+      <button id="npFavBtn" class="toggle" title="お気に入り">♡ &nbsp;FAVORITE</button>
     </div>
   </div>
 
@@ -222,7 +220,7 @@
     <h3>プレイリストに追加</h3>
     <div id="plDialogList" class="pl-dialog-list"></div>
     <div class="pl-dialog-actions">
-      <button id="plNewBtn" class="btn">➕ 新しいプレイリスト</button>
+      <button id="plNewBtn" class="btn">新しいプレイリスト</button>
       <button id="plCancelBtn" class="btn">キャンセル</button>
     </div>
   </dialog>

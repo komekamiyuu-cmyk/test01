@@ -1,5 +1,21 @@
-// 再生中画面をSNS用のスクショ画像(PNG)としてキャンバスに描画・共有する
+// 再生中の曲をSNS用のスクショ画像(PNG)として描画・共有する
 // カセットは再生画面のSVGと同じ 400x252 座標系で描き、拡大して配置する
+
+const PAPER = '#E8E2D5';
+const INK = '#33322E';
+const INK2 = '#5C5A54';
+const FLAME = '#EE3B12';
+const SHELL = '#3A3936';
+const STRIPES = ['#F5B415', '#F0930E', '#F07C10', '#E2371F', '#B32036', '#7B1F42'];
+
+/** ラベルのシリアル番号は曲名から決定的に組み立てる(同じ曲なら常に同じ番号) */
+export function serialOf(track) {
+  let h = 0;
+  for (const ch of track.key ?? track.title ?? '') h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  const A = 'ABCDEFGHJKLMNPRSTUVWXYZ';
+  const l = (n) => A[(h >>> n) % A.length];
+  return `${l(3)}${l(7)}${l(11)}R-${String(h % 10000).padStart(4, '0')}-CA${(h % 90) + 10}`;
+}
 
 function roundRect(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -17,56 +33,25 @@ function ellipsize(ctx, text, maxW) {
   return text + '…';
 }
 
-// プラスねじ
-function drawScrew(ctx, cx, cy, r) {
-  const g = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, 0.5, cx, cy, r);
-  g.addColorStop(0, '#bfe4f5');
-  g.addColorStop(1, '#31708f');
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.fillStyle = g;
-  ctx.fill();
-  ctx.strokeStyle = '#173a52';
-  ctx.lineWidth = 1.4;
-  ctx.beginPath();
-  ctx.moveTo(cx - r * 0.65, cy); ctx.lineTo(cx + r * 0.65, cy);
-  ctx.moveTo(cx, cy - r * 0.65); ctx.lineTo(cx, cy + r * 0.65);
-  ctx.stroke();
-}
+const display = (size) => `${size}px 'Archivo Black', 'Arial Black', sans-serif`;
+const util = (size, w = 500) => `${w} ${size}px Oswald, 'Arial Narrow', sans-serif`;
 
-// テープの巻き(パック)
-function drawPack(ctx, cx, cy, r) {
-  const g = ctx.createRadialGradient(cx, cy, r * 0.15, cx, cy, r);
-  g.addColorStop(0, '#181310');
-  g.addColorStop(0.75, '#0e0b09');
-  g.addColorStop(1, '#050404');
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.fillStyle = g;
-  ctx.fill();
-}
-
-// 歯付きスピンドル穴
+// 歯付きハブ
 function drawHub(ctx, cx, cy) {
   ctx.beginPath();
-  ctx.arc(cx, cy, 15, 0, Math.PI * 2);
-  ctx.fillStyle = '#0a0f1c';
+  ctx.arc(cx, cy, 13, 0, Math.PI * 2);
+  ctx.fillStyle = '#98958E';
   ctx.fill();
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = '#93a1b3';
-  ctx.stroke();
-  ctx.fillStyle = '#b9c2cf';
+  ctx.fillStyle = '#2B2A27';
   for (let i = 0; i < 6; i++) {
     ctx.save();
     ctx.translate(cx, cy);
-    ctx.rotate((i * Math.PI) / 3 + 0.35);
-    roundRect(ctx, -1.6, -14, 3.2, 6.5, 1.3);
-    ctx.fill();
+    ctx.rotate((i * Math.PI) / 3 + 0.4);
+    ctx.fillRect(-1.4, -12.5, 2.8, 5.5);
     ctx.restore();
   }
   ctx.beginPath();
-  ctx.arc(cx, cy, 5.5, 0, Math.PI * 2);
-  ctx.fillStyle = '#05080f';
+  ctx.arc(cx, cy, 6, 0, Math.PI * 2);
   ctx.fill();
 }
 
@@ -79,228 +64,258 @@ async function loadImage(url) {
   });
 }
 
-// スケルトンブルーのカセット本体(400x252 座標系)
-function drawCassette(ctx, track, p, artImg) {
-  // 内部
-  roundRect(ctx, 2, 2, 396, 248, 16);
-  ctx.fillStyle = '#1e3d59';
+/** カセット本体(400x252 座標系) */
+function drawCassette(ctx, track, p, artImg, counter) {
+  // ---- シェル(メカ部) ----
+  roundRect(ctx, 0, 0, 400, 252, 10);
+  ctx.fillStyle = SHELL;
   ctx.fill();
 
-  ctx.save();
-  roundRect(ctx, 2, 2, 396, 248, 16);
-  ctx.clip();
-
-  // テープの巻きとガイド・下端のテープ
-  drawPack(ctx, 142, 140, 27 + 13 * (1 - p));
-  drawPack(ctx, 258, 140, 27 + 13 * p);
-  ctx.fillStyle = '#1c2a3e';
-  for (const gx of [78, 322]) {
-    ctx.beginPath();
-    ctx.arc(gx, 192, 5, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.fillStyle = '#1a1310';
-  ctx.fillRect(78, 197, 244, 5);
-
-  // 半透明ブルーのシェル
-  const tint = ctx.createLinearGradient(0, 2, 0, 250);
-  tint.addColorStop(0, 'rgba(72, 178, 222, 0.42)');
-  tint.addColorStop(1, 'rgba(31, 123, 176, 0.42)');
-  ctx.fillStyle = tint;
-  ctx.fillRect(0, 0, 400, 252);
-  ctx.restore();
-
-  // 縁
-  roundRect(ctx, 2, 2, 396, 248, 16);
-  ctx.lineWidth = 2.5;
-  ctx.strokeStyle = 'rgba(143, 215, 242, 0.85)';
-  ctx.stroke();
-  roundRect(ctx, 8, 8, 384, 236, 12);
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.16)';
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(10, 200); ctx.lineTo(390, 200);
+  // 成形のリブ
+  ctx.strokeStyle = '#4A4844';
   ctx.lineWidth = 2;
-  ctx.strokeStyle = 'rgba(8, 20, 38, 0.5)';
-  ctx.stroke();
-
-  // 白いハブリングと連結バー
-  ctx.fillStyle = '#f4f7fb';
-  roundRect(ctx, 142, 131, 116, 18, 9);
-  ctx.fill();
-  ctx.fillStyle = '#2e93c9';
-  ctx.font = '700 6.5px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('PRECISION MECH.', 200, 143.5);
-  for (const hx of [142, 258]) {
+  for (const y of [20, 28, 226, 234]) {
     ctx.beginPath();
-    ctx.arc(hx, 140, 25, 0, Math.PI * 2);
-    ctx.fillStyle = '#f4f7fb';
-    ctx.fill();
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = '#cfd9e6';
+    ctx.moveTo(52, y);
+    ctx.lineTo(196, y);
     ctx.stroke();
   }
-  drawHub(ctx, 142, 140);
-  drawHub(ctx, 258, 140);
 
-  // 白いステッカーラベル
-  roundRect(ctx, 92, 27, 216, 46, 5);
-  ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+  // 縦組みテキスト
+  ctx.save();
+  ctx.translate(30, 212);
+  ctx.rotate(-Math.PI / 2);
+  ctx.fillStyle = '#6B6862';
+  ctx.font = util(10);
+  ctx.letterSpacing = '3px';
+  ctx.fillText('COMPACT CASSETTE', 0, 0);
+  ctx.letterSpacing = '0px';
+  ctx.restore();
+
+  // ---- テープ窓(淡いシアンの覗き窓) ----
+  roundRect(ctx, 44, 84, 156, 88, 44);
+  ctx.fillStyle = '#C8DDE0';
   ctx.fill();
-  roundRect(ctx, 92, 26, 216, 46, 5);
-  ctx.fillStyle = '#fdfefe';
+  ctx.save();
+  roundRect(ctx, 44, 84, 156, 88, 44);
+  ctx.clip();
+  ctx.fillStyle = FLAME;
+  ctx.fillRect(52, 84, 19, 88);
+  ctx.fillStyle = '#2B2A27';
+  ctx.fillRect(84, 124, 76, 8);
+  ctx.beginPath();
+  ctx.arc(84, 128, 20 + 16 * (1 - p), 0, Math.PI * 2);
   ctx.fill();
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = '#d7dde6';
-  ctx.stroke();
-
-  // ステッカーに曲名(ジャケットがあれば左に添える)
-  let tx = 200, tw = 196, align = 'center';
-  if (artImg) {
-    ctx.save();
-    roundRect(ctx, 98, 31, 36, 36, 4);
-    ctx.clip();
-    ctx.drawImage(artImg, 98, 31, 36, 36);
-    ctx.restore();
-    tx = 140; tw = 160; align = 'left';
-  }
-  ctx.textAlign = align;
-  ctx.fillStyle = '#1d4ed8';
-  ctx.font = '700 13px sans-serif';
-  ctx.fillText(ellipsize(ctx, track.title, tw), tx, 47);
-  ctx.fillStyle = '#64748b';
-  ctx.font = '400 9px sans-serif';
-  ctx.fillText(ellipsize(ctx, track.artist || 'Unknown Artist', tw), tx, 62);
-
-  // シェルに印刷された文字
-  ctx.fillStyle = '#dff4fc';
-  ctx.textAlign = 'center';
-  ctx.font = 'italic 700 12px sans-serif';
-  ctx.fillText('60 min', 54, 44);
-  ctx.textAlign = 'right';
-  ctx.fillText('BLUETAPE', 378, 44);
-  ctx.textAlign = 'center';
-  ctx.globalAlpha = 0.85;
-  ctx.font = '6.5px sans-serif';
-  ctx.fillText('TYPE Ⅰ ( NORMAL ) POSITION   ·   NORMAL BIAS 120μs EQ', 200, 88);
-  ctx.globalAlpha = 1;
-  ctx.textAlign = 'right';
-  ctx.font = '700 9px sans-serif';
-  ctx.fillText('SIDE-A', 378, 124);
-  ctx.font = 'italic 700 11px sans-serif';
-  ctx.fillText('B·tune 60', 388, 194);
   ctx.beginPath();
-  ctx.moveTo(96, 97); ctx.lineTo(168, 93); ctx.lineTo(174, 100); ctx.lineTo(232, 95);
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = 'rgba(143, 215, 242, 0.45)';
-  ctx.stroke();
-  ctx.textAlign = 'left';
-  ctx.fillStyle = 'rgba(7, 21, 34, 0.85)';
-  ctx.font = '700 24px sans-serif';
-  ctx.fillText('A', 34, 242);
+  ctx.arc(160, 128, 20 + 16 * p, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  drawHub(ctx, 84, 128);
+  drawHub(ctx, 160, 128);
 
-  // 下部(ヘッド開口部)
+  // ヘッド開口部
+  ctx.fillStyle = '#2B2A27';
   ctx.beginPath();
-  ctx.moveTo(110, 246); ctx.lineTo(290, 246); ctx.lineTo(272, 204); ctx.lineTo(128, 204);
+  ctx.moveTo(62, 252); ctx.lineTo(182, 252); ctx.lineTo(170, 206); ctx.lineTo(74, 206);
   ctx.closePath();
-  ctx.fillStyle = 'rgba(22, 52, 78, 0.9)';
   ctx.fill();
-  ctx.lineWidth = 1.5;
-  ctx.strokeStyle = 'rgba(120, 200, 235, 0.3)';
-  ctx.stroke();
-  ctx.fillStyle = '#060b14';
-  ctx.strokeStyle = '#2a4a66';
-  for (const fx of [156, 244]) {
+  ctx.fillStyle = '#141413';
+  for (const cx of [96, 148]) {
     ctx.beginPath();
-    ctx.arc(fx, 228, 5.5, 0, Math.PI * 2);
-    ctx.fill(); ctx.stroke();
+    ctx.arc(cx, 232, 6, 0, Math.PI * 2);
+    ctx.fill();
   }
-  roundRect(ctx, 183, 210, 34, 14, 2);
-  ctx.fill(); ctx.stroke();
-  for (const fx of [132, 268]) {
+  ctx.fillRect(112, 214, 20, 12);
+
+  // 赤いネジ
+  for (const cy of [20, 232]) {
     ctx.beginPath();
-    ctx.arc(fx, 238, 3.5, 0, Math.PI * 2);
+    ctx.arc(20, cy, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#2B2A27';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(20, cy, 4.5, 0, Math.PI * 2);
+    ctx.fillStyle = FLAME;
     ctx.fill();
   }
 
-  // プラスチックの艶
+  // ---- ラベル面(切り欠き付き) ----
+  ctx.beginPath();
+  ctx.moveTo(214, 0);
+  ctx.lineTo(390, 0);
+  ctx.quadraticCurveTo(400, 0, 400, 10);
+  ctx.lineTo(400, 242);
+  ctx.quadraticCurveTo(400, 252, 390, 252);
+  ctx.lineTo(214, 252);
+  ctx.lineTo(214, 146);
+  ctx.quadraticCurveTo(204, 138, 214, 128);
+  ctx.closePath();
+  ctx.fillStyle = PAPER;
+  ctx.fill();
+
+  // タグ
+  ctx.fillStyle = INK2;
+  ctx.font = util(6);
+  ctx.letterSpacing = '1.1px';
+  ctx.textAlign = 'left';
+  ctx.fillText('PLAYER SYSTEM', 228, 13);
+  ctx.letterSpacing = '0px';
+  ctx.fillStyle = FLAME;
+  ctx.fillRect(228, 18, 34, 22);
+  ctx.fillStyle = PAPER;
+  ctx.font = display(13);
+  ctx.textAlign = 'center';
+  ctx.fillText('CP', 245, 34);
+  ctx.fillStyle = INK;
+  ctx.beginPath();
+  ctx.arc(272, 34, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // ハッチング(斜めストライプ)
   ctx.save();
-  roundRect(ctx, 2, 2, 396, 248, 16);
+  ctx.beginPath();
+  ctx.rect(286, 18, 100, 22);
   ctx.clip();
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.07)';
-  ctx.beginPath();
-  ctx.moveTo(52, 2); ctx.lineTo(118, 2); ctx.lineTo(64, 250); ctx.lineTo(26, 250);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
-  ctx.beginPath();
-  ctx.moveTo(132, 2); ctx.lineTo(156, 2); ctx.lineTo(102, 250); ctx.lineTo(88, 250);
-  ctx.closePath();
-  ctx.fill();
+  ctx.fillStyle = FLAME;
+  ctx.transform(1, 0, -Math.tan(0.35), 1, 0, 0);
+  for (const x of [286, 308, 330, 352, 374]) ctx.fillRect(x + 12, 10, 13, 38);
   ctx.restore();
 
-  // ネジ
-  drawScrew(ctx, 16, 16, 5.5);
-  drawScrew(ctx, 384, 16, 5.5);
-  drawScrew(ctx, 16, 236, 5.5);
-  drawScrew(ctx, 384, 236, 5.5);
-  drawScrew(ctx, 200, 235, 4.5);
+  // ---- 曲名(ラベル面の主役) ----
+  ctx.textAlign = 'left';
+  const lx = 228, lw = 158;
+  ctx.fillStyle = INK;
+  ctx.font = display(22);
+  ctx.fillText(ellipsize(ctx, track.title, lw), lx, 78);
+  ctx.fillStyle = INK2;
+  ctx.font = util(11);
+  ctx.letterSpacing = '1px';
+  ctx.fillText(ellipsize(ctx, track.artist || 'UNKNOWN ARTIST', lw), lx, 96);
+  ctx.letterSpacing = '0px';
+
+  // ジャケット(あればラベル面の中段に)
+  if (artImg) {
+    ctx.drawImage(artImg, lx, 106, 36, 36);
+    ctx.strokeStyle = INK;
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(lx, 106, 36, 36);
+  }
+
+  // 罫線束
+  ctx.strokeStyle = INK2;
+  ctx.lineWidth = 1.6;
+  for (let i = 0; i < 5; i++) {
+    ctx.beginPath();
+    ctx.moveTo(228, 150 + i * 6);
+    ctx.lineTo(386, 150 + i * 6);
+    ctx.stroke();
+  }
+
+  // シリアル番号
+  ctx.fillStyle = FLAME;
+  ctx.font = util(8, 600);
+  ctx.letterSpacing = '1.3px';
+  ctx.fillText('SERIAL NUMBER', 228, 192);
+  ctx.font = util(8.5);
+  ctx.letterSpacing = '1px';
+  ctx.fillText(serialOf(track), 228, 204);
+  ctx.letterSpacing = '0px';
+
+  // SIDE A + 巨大な A
+  ctx.save();
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = INK;
+  ctx.font = display(52);
+  ctx.textAlign = 'right';
+  ctx.fillText('A', 386, 242);
+  ctx.restore();
+  ctx.textAlign = 'left';
+  ctx.fillStyle = INK;
+  ctx.font = util(11, 600);
+  ctx.letterSpacing = '2px';
+  ctx.fillText('SIDE A', 228, 240);
+  ctx.letterSpacing = '0px';
+  ctx.fillStyle = FLAME;
+  ctx.beginPath();
+  ctx.moveTo(300, 228); ctx.lineTo(316, 228); ctx.lineTo(308, 240);
+  ctx.closePath();
+  ctx.fill();
+
+  // カウンター(テープ位置)
+  ctx.fillStyle = INK2;
+  ctx.font = util(7);
+  ctx.letterSpacing = '1.4px';
+  ctx.textAlign = 'right';
+  ctx.fillText(`COUNTER ${counter}`, 386, 192);
+  ctx.letterSpacing = '0px';
+  ctx.textAlign = 'left';
 }
 
 /**
- * 再生中の曲情報からシェア用画像を作る。
+ * 再生中の曲情報からシェア用画像(1080x1080 PNG)を作る。
  * @returns {Promise<Blob>}
  */
-export async function drawShareCard(track, progress) {
+export async function drawShareCard(track, progress, counter = '000') {
   const S = 1080;
   const canvas = document.createElement('canvas');
   canvas.width = S;
   canvas.height = S;
   const ctx = canvas.getContext('2d');
 
-  // 背景(青のグラデーション)
-  const bg = ctx.createLinearGradient(0, 0, 0, S);
-  bg.addColorStop(0, '#0e1a33');
-  bg.addColorStop(0.55, '#0b1220');
-  bg.addColorStop(1, '#12224a');
-  ctx.fillStyle = bg;
+  // 埋め込み書体の読み込みを待ってから描く(待たないとフォールバックで焼き付いてしまう)
+  try { await document.fonts.ready; } catch { /* 未対応環境ではそのまま描く */ }
+
+  // 地
+  ctx.fillStyle = PAPER;
   ctx.fillRect(0, 0, S, S);
 
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#8fa3c4';
-  ctx.font = '600 34px system-ui, sans-serif';
-  ctx.fillText('N O W   P L A Y I N G', S / 2, 128);
+  // 上部: 見出し + ストライプ帯
+  ctx.fillStyle = FLAME;
+  ctx.fillRect(64, 96, 96, 10);
+  ctx.fillStyle = INK;
+  ctx.font = display(58);
+  ctx.textAlign = 'left';
+  ctx.fillText('NOW PLAYING', 64, 176);
+  ctx.fillStyle = INK2;
+  ctx.font = util(22);
+  ctx.letterSpacing = '6px';
+  ctx.fillText('AUDIO COMPACT CASSETTE / TYPE-Ⅰ', 66, 212);
+  ctx.letterSpacing = '0px';
+
+  const bandW = (S - 128) / STRIPES.length;
+  STRIPES.forEach((c, i) => {
+    ctx.fillStyle = c;
+    ctx.fillRect(64 + i * bandW, 240, bandW + 1, 18);
+  });
 
   const artImg = track.artUrl ? await loadImage(track.artUrl) : null;
   const p = Math.min(Math.max(progress || 0, 0), 1);
 
-  // カセット(400x252 → 2.15倍で中央配置、うっすら影)
-  const scale = 2.15;
-  ctx.save();
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.55)';
-  ctx.shadowBlur = 60;
-  ctx.shadowOffsetY = 24;
-  roundRect(ctx, (S - 400 * scale) / 2, 208, 400 * scale, 252 * scale, 16 * scale);
-  ctx.fillStyle = '#1e3d59';
+  // カセット(400x252 → 2.38倍、ハードシャドウ付き)
+  const scale = 2.38;
+  const cw = 400 * scale, chh = 252 * scale;
+  const cx0 = (S - cw) / 2, cy0 = 330;
+  ctx.fillStyle = INK;
+  roundRect(ctx, cx0 + 14, cy0 + 14, cw, chh, 10 * scale);
   ctx.fill();
-  ctx.restore();
 
   ctx.save();
-  ctx.translate((S - 400 * scale) / 2, 208);
+  ctx.translate(cx0, cy0);
   ctx.scale(scale, scale);
-  drawCassette(ctx, track, p, artImg);
+  drawCassette(ctx, track, p, artImg, counter);
   ctx.restore();
 
   // フッター
-  ctx.textAlign = 'center';
-  ctx.fillStyle = '#60a5fa';
-  ctx.font = '600 36px system-ui, sans-serif';
-  ctx.fillText('📼 カセットプレーヤー', S / 2, S - 148);
-  ctx.fillStyle = '#8fa3c4';
-  ctx.font = '400 28px system-ui, sans-serif';
-  ctx.fillText(new Date().toLocaleDateString('ja-JP'), S / 2, S - 98);
+  ctx.fillStyle = INK;
+  ctx.fillRect(64, S - 132, S - 128, 3);
+  ctx.font = util(24, 600);
+  ctx.letterSpacing = '3px';
+  ctx.textAlign = 'left';
+  ctx.fillText('CASSETTE PLAYER', 64, S - 92);
+  ctx.fillStyle = INK2;
+  ctx.textAlign = 'right';
+  ctx.fillText(new Date().toLocaleDateString('ja-JP'), S - 64, S - 92);
+  ctx.letterSpacing = '0px';
 
   return new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
 }
