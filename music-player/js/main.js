@@ -543,14 +543,24 @@ async function shareScreenshot() {
       if (e.name === 'AbortError') return;
     }
   }
-  // 共有APIが使えない場合はダウンロード
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'now-playing.png';
-  a.click();
-  setTimeout(() => URL.revokeObjectURL(url), 5000);
-  toast('画像を保存しました(SNSに投稿できます)');
+  // 共有APIが使えない環境では画像を表示して、長押し / 右クリック / 保存ボタンで持ち帰ってもらう
+  // (サンドボックス内ではダウンロードがブロックされることがあるため、必ず画像自体を出す)
+  showShotDialog(blob);
+}
+
+let shotUrl = null;
+
+function showShotDialog(blob) {
+  if (shotUrl) URL.revokeObjectURL(shotUrl);
+  shotUrl = URL.createObjectURL(blob);
+  $('shotImg').src = shotUrl;
+  $('shotSaveBtn').onclick = () => {
+    const a = document.createElement('a');
+    a.href = shotUrl;
+    a.download = 'now-playing.png';
+    a.click();
+  };
+  $('shotDialog').showModal();
 }
 
 // ---------- トースト ----------
@@ -606,6 +616,7 @@ $('plNewBtn').onclick = () => {
   if (name) { addToPlaylist(name, plDialogTarget); $('plDialog').close(); }
 };
 $('plCancelBtn').onclick = () => $('plDialog').close();
+$('shotCloseBtn').onclick = () => $('shotDialog').close();
 
 document.addEventListener('keydown', (e) => {
   if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {

@@ -596,6 +596,26 @@ body {
 .pl-dialog-list .btn { text-align: left; }
 .pl-dialog-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 
+.shot-dialog {
+  margin: auto;
+  padding: 18px;
+  width: min(92vw, 420px);
+  background: var(--paper-2);
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  box-shadow: 7px 7px 0 var(--flame);
+}
+.shot-dialog::backdrop { background: rgba(51, 50, 46, 0.6); }
+.shot-dialog h3 { font-family: var(--fd); font-size: 1rem; margin-bottom: 12px; }
+.shot-dialog img { display: block; width: 100%; height: auto; border: 2px solid var(--ink); }
+.shot-hint {
+  font-family: var(--fu);
+  font-size: 0.72rem;
+  letter-spacing: 0.05em;
+  color: var(--ink-2);
+  margin: 10px 0 14px;
+}
+
 .toast {
   position: fixed;
   left: 50%;

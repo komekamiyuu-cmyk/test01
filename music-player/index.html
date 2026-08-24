@@ -225,6 +225,17 @@
     </div>
   </dialog>
 
+  <!-- 生成したシェア画像のプレビュー -->
+  <dialog id="shotDialog" class="shot-dialog">
+    <h3>シェア画像</h3>
+    <img id="shotImg" alt="再生中の曲のシェア画像">
+    <p class="shot-hint">長押し(スマホ)/ 右クリック(PC)で画像を保存できます</p>
+    <div class="pl-dialog-actions">
+      <button id="shotSaveBtn" class="btn primary">保存</button>
+      <button id="shotCloseBtn" class="btn">閉じる</button>
+    </div>
+  </dialog>
+
   <div id="toast" class="toast hidden"></div>
 
   <audio id="audio"></audio>
