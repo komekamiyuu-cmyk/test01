@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <!-- 端末内の音楽を読み取るためだけの権限。Android 13 で権限が細分化された -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
@@ -13,7 +14,11 @@
     <!-- ロック画面・通知の操作パネルを出すため -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- インターネット権限は要求しない。曲も画面も全て端末内で完結する -->
+    <!-- インターネット権限は要求しない。曲も画面も全て端末内で完結する。
+         ExoPlayer が配信再生用に持ち込む通信状態の参照も、使わないので取り除く -->
+    <uses-permission
+        android:name="android.permission.ACCESS_NETWORK_STATE"
+        tools:node="remove" />
 
     <application
         android:allowBackup="true"

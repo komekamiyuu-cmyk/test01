@@ -53,12 +53,14 @@ jobs:
           "$BT/aapt" dump permissions "$APK"
           echo "::endgroup::"
 
-          echo "::group::インターネット権限を持っていないことの確認"
-          if "$BT/aapt" dump permissions "$APK" | grep -q "android.permission.INTERNET"; then
-            echo "NG: INTERNET 権限が入っている"; exit 1
-          else
-            echo "OK: INTERNET 権限なし(通信しない)"
-          fi
+          echo "::group::通信系の権限が入っていないことの確認"
+          # ライブラリの取り込みで通信系の権限が紛れ込んでいないか見張る
+          for P in android.permission.INTERNET android.permission.ACCESS_NETWORK_STATE; do
+            if "$BT/aapt" dump permissions "$APK" | grep -q "$P"; then
+              echo "NG: $P が入っている"; exit 1
+            fi
+            echo "OK: $P なし"
+          done
           echo "::endgroup::"
 
           echo "::group::再生サービスの登録"
