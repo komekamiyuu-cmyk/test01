@@ -45,19 +45,28 @@ async function collectFromDirectory(dirHandle, out) {
   }
 }
 
+// 埋め込み枠(iframe)の中では showDirectoryPicker が使えない。
+// しかも失敗時のエラーが「利用者が取り消した」ときと同じ AbortError になるため
+// 区別できず、黙って何も起きない状態になってしまう。
+// 枠の中だと分かっている場合は、最初から input 方式を使う(こちらは枠の中でも開く)。
+const inFrame = window.self !== window.top;
+
 async function openFolder() {
-  if (window.showDirectoryPicker) {
+  if (window.showDirectoryPicker && !inFrame) {
+    const started = Date.now();
     try {
       const dir = await window.showDirectoryPicker();
       const files = [];
       await collectFromDirectory(dir, files);
       await addFiles(files);
+      return;
     } catch (e) {
-      if (e.name !== 'AbortError') toast('フォルダを開けませんでした');
+      // 取り消しなら何もしない。ただし即座に失敗した場合は環境側で塞がれたとみなし、
+      // 行き止まりにせず input 方式へ切り替える。
+      if (e.name === 'AbortError' && Date.now() - started > 250) return;
     }
-  } else {
-    $('folderInput').click();
   }
+  $('folderInput').click();
 }
 
 /** フォルダから選んだ場合、親フォルダ名はアルバム名の有力な手がかりになる */
@@ -673,6 +682,26 @@ function toast(msg) {
 // ---------- イベント配線 ----------
 
 const pickFiles = () => $('filesInput').click();
+
+// デモ曲。ファイル選択が使えない環境でも動作を確かめられるようにするための逃げ道
+$('demoBtn').onclick = async () => {
+  const btn = $('demoBtn');
+  btn.disabled = true;
+  toast('デモ曲を作成中…');
+  try {
+    const { buildDemoTracks } = await import('./demo.js');
+    const demo = await buildDemoTracks();
+    const seen = new Set(state.tracks.map((t) => t.key));
+    for (const t of demo) if (!seen.has(t.key)) state.tracks.push(t);
+    state.tracks.sort((a, b) => a.album.localeCompare(b.album, 'ja') || a.title.localeCompare(b.title, 'ja'));
+    toast(`デモ曲 ${demo.length} 曲を読み込みました`);
+    render();
+  } catch (e) {
+    toast('デモ曲を作成できませんでした');
+  } finally {
+    btn.disabled = false;
+  }
+};
 
 $('addFilesBtn').onclick = pickFiles;
 $('openFolderBtn').onclick = openFolder;

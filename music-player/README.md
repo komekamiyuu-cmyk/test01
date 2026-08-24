@@ -121,6 +121,7 @@ music-player/          # 画面(ブラウザ版とAndroid版で共用)
 ├─ js/
 │  ├─ main.js          # 状態管理・画面描画・再生制御
 │  ├─ metadata.js      # MP3/M4A/FLAC/OGG のタグ読み取り(ブラウザ版で使用)
+│  ├─ demo.js          # デモ曲(音もジャケットもその場で合成)
 │  └─ share.js         # SNSシェア用スクショ画像のCanvas描画
 └─ manifest.json / sw.js / icons/   # PWA(ホーム画面に追加・オフライン起動)
 

@@ -159,6 +159,16 @@ body {
 }
 .empty-title { font-family: var(--fd); font-size: clamp(1.5rem, 6.5vw, 2.1rem); line-height: 1.24; text-wrap: balance; }
 .empty-actions { display: flex; flex-wrap: wrap; gap: 12px; margin: 22px 0 16px; }
+
+.empty-demo {
+  margin: 20px 0 18px;
+  padding-top: 18px;
+  border-top: 2px solid var(--ink);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
 .empty-note { font-family: var(--fu); font-size: 0.68rem; letter-spacing: 0.05em; color: var(--ink-2); }
 
 .section-head {
