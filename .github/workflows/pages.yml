@@ -1,5 +1,12 @@
 # push されたら GitHub Pages に自動公開する
 # (リポジトリの Settings → Pages → Source を「GitHub Actions」にしてください)
+#
+# 対象をデフォルトブランチだけに絞っている。
+# github-pages 環境の保護ルールがデフォルトブランチ以外からのデプロイを拒否するため、
+# 作業ブランチに対して走らせても必ず失敗し、PRに意味のない赤が付き続けてしまう。
+# 作業ブランチからも公開したい場合は、
+#   Settings → Environments → github-pages → Deployment branches and tags
+# にそのブランチを追加したうえで、下の branches に足すか workflow_dispatch で手動実行する。
 name: Deploy to GitHub Pages
 
 on:
@@ -7,7 +14,6 @@ on:
     branches:
       - main
       - claude/windows-android-daw-g39n8d
-      - claude/retro-cassette-music-player-3nvs6g
   workflow_dispatch:
 
 permissions:
