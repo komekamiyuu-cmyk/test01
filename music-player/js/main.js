@@ -1,6 +1,9 @@
 // カセットプレーヤー — メインロジック
 import { readTags } from './metadata.js';
 import { drawShareCard, serialOf } from './share.js';
+import {
+  rememberFolder, recallFolder, forgetFolder, folderPermission, askFolderPermission,
+} from './folderstore.js';
 
 const AUDIO_EXT = /\.(mp3|m4a|aac|ogg|oga|opus|wav|flac|weba|webm)$/i;
 
@@ -51,14 +54,23 @@ async function collectFromDirectory(dirHandle, out) {
 // 枠の中だと分かっている場合は、最初から input 方式を使う(こちらは枠の中でも開く)。
 const inFrame = window.self !== window.top;
 
+/** 覚えているフォルダから曲を読み込む */
+async function loadFromHandle(dir) {
+  const files = [];
+  await collectFromDirectory(dir, files);
+  if (files.length === 0) { toast('そのフォルダに音楽ファイルがありませんでした'); return false; }
+  await addFiles(files);
+  return true;
+}
+
 async function openFolder() {
   if (window.showDirectoryPicker && !inFrame) {
     const started = Date.now();
     try {
       const dir = await window.showDirectoryPicker();
-      const files = [];
-      await collectFromDirectory(dir, files);
-      await addFiles(files);
+      // 次回の起動でそのまま読み込めるよう、選んだフォルダを覚えておく
+      await rememberFolder(dir);
+      await loadFromHandle(dir);
       return;
     } catch (e) {
       // 取り消しなら何もしない。ただし即座に失敗した場合は環境側で塞がれたとみなし、
@@ -636,33 +648,43 @@ async function shareScreenshot() {
     return;
   }
 
-  const file = new File([blob], 'now-playing.png', { type: 'image/png' });
-  const shareData = { files: [file], text: message };
-  if (navigator.canShare?.(shareData)) {
-    try {
-      await navigator.share(shareData);
-      return;
-    } catch (e) {
-      if (e.name === 'AbortError') return;
-    }
-  }
-  // 共有APIが使えない環境では画像を表示して、長押し / 右クリック / 保存ボタンで持ち帰ってもらう
-  // (サンドボックス内ではダウンロードがブロックされることがあるため、必ず画像自体を出す)
-  showShotDialog(blob);
+  // ここで直接 navigator.share を呼ばないのが要点。
+  // 画像を作る待ち時間の間に「ユーザー操作直後」という資格が切れてしまい、
+  // 共有が拒否されて何も起きない状態になるため、
+  // 一度プレビューを出して、その中のボタン(=新しい操作)から共有する。
+  showShotDialog(blob, message);
 }
 
 let shotUrl = null;
 
-function showShotDialog(blob) {
+function showShotDialog(blob, message) {
   if (shotUrl) URL.revokeObjectURL(shotUrl);
   shotUrl = URL.createObjectURL(blob);
   $('shotImg').src = shotUrl;
+
+  const file = new File([blob], 'now-playing.png', { type: 'image/png' });
+  const shareData = { files: [file], text: message };
+  const canShare = !!navigator.canShare?.(shareData);
+
+  const shareBtn = $('shotShareBtn');
+  shareBtn.classList.toggle('hidden', !canShare);
+  shareBtn.onclick = async () => {
+    try {
+      await navigator.share(shareData);       // このクリックが新しい資格になる
+      $('shotDialog').close();
+    } catch (e) {
+      if (e.name === 'AbortError') return;    // 利用者が共有をやめた
+      toast('共有できませんでした。画像を長押しして保存してください');
+    }
+  };
+
   $('shotSaveBtn').onclick = () => {
     const a = document.createElement('a');
     a.href = shotUrl;
     a.download = 'now-playing.png';
     a.click();
   };
+
   $('shotDialog').showModal();
 }
 
@@ -859,7 +881,10 @@ function loadFromAndroid() {
   }
   // MediaStore が題名・アーティスト・アルバム・ジャンルまで持っているのでタグ解析は不要
   state.tracks = list.map((t) => ({ ...t, artUrl: t.artUrl || null, file: null }));
-  toast(`${state.tracks.length} 曲を読み込みました`);
+  const scope = android.libraryScope?.() || '';
+  toast(scope && scope !== 'all'
+    ? `${scope} フォルダから ${state.tracks.length} 曲を読み込みました`
+    : `${state.tracks.length} 曲を読み込みました`);
   render();
 }
 
@@ -884,9 +909,35 @@ window.__androidBack = () => {
   return false;
 };
 
-// フォルダ選択はスマホのブラウザでは機能しないため、PCでだけ「フォルダ」ボタンを出す
-if (!/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-  document.body.classList.add('has-folder-picker');
+// ---------- 起動時に前回のフォルダを読み直す ----------
+// 「閉じたら曲が消える」のを防ぐ仕組み。覚えたフォルダを開き直す。
+// 読み取りの許可が生きていればそのまま自動で、切れていれば1タップで戻せる。
+
+async function restoreFolderOnStart() {
+  const dir = await recallFolder();
+  if (!dir) return;
+
+  const perm = await folderPermission(dir);
+  if (perm === 'granted') {
+    toast('前回のフォルダを読み込んでいます…');
+    const ok = await loadFromHandle(dir);
+    if (!ok) await forgetFolder();
+    return;
+  }
+  if (perm === 'denied' || perm === 'unsupported') { await forgetFolder(); return; }
+
+  // 'prompt' の場合、許可を求めるには利用者の操作が要るのでボタンを出す
+  const btn = $('reopenBtn');
+  btn.classList.remove('hidden');
+  btn.textContent = `前回のフォルダを開く(${dir.name})`;
+  btn.onclick = async () => {
+    if ((await askFolderPermission(dir)) !== 'granted') {
+      toast('フォルダへのアクセスが許可されませんでした');
+      return;
+    }
+    btn.classList.add('hidden');
+    if (!(await loadFromHandle(dir))) await forgetFolder();
+  };
 }
 
 if (android) {
@@ -894,6 +945,9 @@ if (android) {
   document.body.classList.add('is-android');
   if (android.hasPermission()) loadFromAndroid();
   else android.requestPermission();
+} else {
+  // ブラウザ版は、前回選んだフォルダを開き直す
+  restoreFolderOnStart();
 }
 
 render();

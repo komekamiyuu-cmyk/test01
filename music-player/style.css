@@ -617,10 +617,6 @@ body.dragging .drop-hint { display: grid; }
 
 .top-actions { display: flex; gap: 8px; flex-shrink: 0; }
 
-/* フォルダ選択はスマホのブラウザが対応していないので、対応環境でだけ出す */
-.desktop-only { display: none; }
-body.has-folder-picker .desktop-only { display: inline-block; }
-
 /* Androidアプリ版では端末の音楽を自動で読むため、ファイル選択の導線を出さない */
 .android-only { display: none; }
 body.is-android .android-only { display: block; }

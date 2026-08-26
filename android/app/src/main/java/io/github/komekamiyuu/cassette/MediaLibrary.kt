@@ -38,22 +38,47 @@ object MediaLibrary {
             return base.toTypedArray()
         }
 
+    /** 起動時に優先して読み込むフォルダ名。ここに曲を置いておけば自動で一覧に出る */
+    const val PREFERRED_FOLDER = "TapePlayer"
+
     // 一覧は起動のたびに引き直さず、プロセス内で使い回す(2回目以降の表示を速くする)
     @Volatile
     private var cached: String? = null
 
+    /** 直近の読み込みが指定フォルダのものか、端末内の全曲かを覚えておく */
+    @Volatile
+    var lastScope: String = ""
+        private set
+
     /**
      * 曲の一覧を JSON 文字列で返す。
-     * 画面側はこれをそのまま描画に使う(Web版のトラック構造に合わせてある)。
+     *
+     * まず TapePlayer フォルダの中だけを探し、1曲も無ければ端末内の全曲に切り替える。
+     * こうしておくと、フォルダを用意していれば起動しただけでそこが一覧に出て、
+     * 用意していなくても空っぽにはならない。
      */
     fun listTracksJson(context: Context, forceRefresh: Boolean = false): String {
         cached?.let { if (!forceRefresh) return it }
-        val json = query(context)
+
+        val pathColumn =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) MediaStore.Audio.Media.RELATIVE_PATH
+            else MediaStore.Audio.Media.DATA
+
+        val musicOnly = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
+        val scoped = query(context, "$musicOnly AND $pathColumn LIKE ?", arrayOf("%$PREFERRED_FOLDER%"))
+
+        val json = if (JSONArray(scoped).length() > 0) {
+            lastScope = PREFERRED_FOLDER
+            scoped
+        } else {
+            lastScope = "all"
+            query(context, musicOnly, null)
+        }
         cached = json
         return json
     }
 
-    private fun query(context: Context): String {
+    private fun query(context: Context, selection: String, args: Array<String>?): String {
         val out = JSONArray()
         val collection: Uri =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -63,13 +88,11 @@ object MediaLibrary {
                 MediaStore.Audio.Media.EXTERNAL_CONTENT_URI
             }
 
-        // 着信音・通知音・アラーム音を除き、音楽として登録されているものだけを対象にする
-        val selection = "${MediaStore.Audio.Media.IS_MUSIC} != 0"
         val order = "${MediaStore.Audio.Media.ALBUM} COLLATE NOCASE ASC, " +
             "${MediaStore.Audio.Media.TRACK} ASC, " +
             "${MediaStore.Audio.Media.TITLE} COLLATE NOCASE ASC"
 
-        context.contentResolver.query(collection, projection, selection, null, order)?.use { c ->
+        context.contentResolver.query(collection, projection, selection, args, order)?.use { c ->
             val idCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media._ID)
             val titleCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.TITLE)
             val artistCol = c.getColumnIndexOrThrow(MediaStore.Audio.Media.ARTIST)

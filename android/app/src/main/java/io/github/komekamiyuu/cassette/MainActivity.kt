@@ -290,6 +290,10 @@ class MainActivity : AppCompatActivity() {
         fun listTracks(): String =
             if (hasPermission()) MediaLibrary.listTracksJson(this@MainActivity) else "[]"
 
+        /** どこから読み込んだか(TapePlayer フォルダ / 端末全体)を画面へ伝える */
+        @JavascriptInterface
+        fun libraryScope(): String = MediaLibrary.lastScope
+
         /** 曲を入れ替えた後などに、一覧を取り直す */
         @JavascriptInterface
         fun refreshTracks(): String =
