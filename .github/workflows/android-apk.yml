@@ -1,0 +1,42 @@
+# てがきメモ(Androidネイティブ版)の APK をビルドする。
+# 成果物は Actions の実行ページ下部「Artifacts」からダウンロードできる。
+name: Build Android APK
+
+on:
+  push:
+    branches: [claude/android-handwriting-memo-app-5y7ote]
+    paths:
+      - 'android-app/**'
+      - '.github/workflows/android-apk.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Android SDK を用意する
+        run: |
+          SDKMANAGER="$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager"
+          yes | "$SDKMANAGER" --licenses > /dev/null || true
+          "$SDKMANAGER" "platforms;android-35" "build-tools;35.0.0" > /dev/null
+
+      - name: デバッグ用 APK をビルド
+        working-directory: android-app
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: APK をアップロード
+        uses: actions/upload-artifact@v4
+        with:
+          name: tegaki-memo-debug-apk
+          path: android-app/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
