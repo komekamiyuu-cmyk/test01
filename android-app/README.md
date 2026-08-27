@@ -3,12 +3,22 @@
 Kotlin + Jetpack Compose + Room で作った、**Androidタブレット向け手書きメモアプリ**のプロトタイプです。
 [PWA版](../handwriting-memo/) と同じ操作感を、S Pen などのスタイラス前提でネイティブ実装しています。
 
-> **ビルドについて**
-> このコードは Android SDK が無い環境で書いたため、**まだコンパイル・実機確認をしていません**。
-> Android Studio(Ladybug 以降)で `android-app/` を開き、初回ビルドで Gradle 同期してください。
-> ビルドが通ることの確認と実機での書き心地の調整が、次にやるべき作業です。
+> **状態**: GitHub Actions でのビルドは成功しています(APK 約16MB)。
+> ただし**実機での書き心地はまだ未確認**です。スタイラスでの筆圧・パームリジェクションの
+> 効き具合は、実際に書いてみて調整が要る部分です。
 
-## 動かし方
+## 端末に入れる(ビルド不要)
+
+`android-app/` を変更して push すると、GitHub Actions が APK を作ります。
+
+1. リポジトリの **Actions → Build Android APK** から最新の実行を開く
+2. ページ下部の **Artifacts → `tegaki-memo-debug-apk`** をタブレットでダウンロード
+3. zip を解凍して `app-debug.apk` をタップ
+4. 「不明なアプリのインストール」を許可 → インストール
+
+デバッグ署名のため Play ストア経由ではありませんが、自分の端末に入れる分には問題ありません。
+
+## 自分でビルドする
 
 ```bash
 # Android Studio で android-app を開く(推奨)

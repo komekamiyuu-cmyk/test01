@@ -7,6 +7,7 @@ on:
     branches: [claude/android-handwriting-memo-app-5y7ote]
     paths:
       - 'android-app/**'
+      - '!android-app/README.md'
       - '.github/workflows/android-apk.yml'
   workflow_dispatch:
 

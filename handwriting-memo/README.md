@@ -3,16 +3,29 @@
 **Androidタブレット向けの手書きメモアプリ。** スタイラスで書いて、フォルダで整理できます。
 ブラウザだけで動くので、インストールもビルドも不要です。
 
-## すぐ試す
+## タブレットに入れる
+
+GitHub Pages で公開したものを開き、Chrome のメニュー(⋮)から
+**「アプリをインストール」/「ホーム画面に追加」** を選びます。
+アドレスバーのない全画面アプリとして起動し、オフラインでも動きます。
+
+```
+https://komekamiyuu-cmyk.github.io/test01/handwriting-memo/
+```
+
+> 公開には、リポジトリの **Settings → Pages → Source** を「GitHub Actions」にする必要があります
+> (このリポジトリは「ブランチから配信」のままなので、Actions 経由の公開が失敗します)。
+
+## 手元で試す
 
 ```bash
 # リポジトリのルートで
 python -m http.server 8000
-# → タブレットの Chrome で http://<PCのIP>:8000/handwriting-memo/ を開く
+# → ブラウザで http://localhost:8000/handwriting-memo/
 ```
 
-Chrome のメニューから **「ホーム画面に追加」** すると、アドレスバーのない全画面アプリとして起動します(PWA)。
-オフラインでも動きます。
+LAN 越し(`http://192.168.x.x:8000/...`)でもページは開けますが、**インストールはできません**。
+安全なコンテキスト(https か localhost)でないと Service Worker が登録されないためです。
 
 ## できること
 
