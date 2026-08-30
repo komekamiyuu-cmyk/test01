@@ -532,8 +532,8 @@ function updateProgress() {
   $('curTime').textContent = fmtTime(posSec());
   $('durTime').textContent = fmtTime(dur);
   // テープの巻き量を再生位置に連動させる(左が減り、右が増える)
-  $('spoolL').setAttribute('r', String(20 + 16 * (1 - p)));
-  $('spoolR').setAttribute('r', String(20 + 16 * p));
+  $('spoolL').setAttribute('r', String(20 + 22 * (1 - p)));
+  $('spoolR').setAttribute('r', String(20 + 22 * p));
   // テープカウンター
   $('tapeCounter').textContent = String(Math.floor(posSec() * 1.6) % 1000).padStart(3, '0');
 }
@@ -595,8 +595,8 @@ function tick(now) {
     // 線速度一定のテープ → リールの回転はテープ巻き半径に反比例
     const d = durSec();
     const p = d ? posSec() / d : 0;
-    reelAngle.l += (dt * 4200) / (20 + 16 * (1 - p));
-    reelAngle.r += (dt * 4200) / (20 + 16 * p);
+    reelAngle.l += (dt * 4200) / (20 + 22 * (1 - p));
+    reelAngle.r += (dt * 4200) / (20 + 22 * p);
     $('hubL').style.transform = `rotate(${(reelAngle.l % 360).toFixed(1)}deg)`;
     $('hubR').style.transform = `rotate(${(reelAngle.r % 360).toFixed(1)}deg)`;
   }

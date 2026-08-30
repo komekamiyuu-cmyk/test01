@@ -99,114 +99,244 @@
       <div class="cassette-wrap" id="cassette">
         <svg class="cassette-svg" viewBox="0 0 400 252" aria-hidden="true">
           <defs>
-            <clipPath id="winClip"><rect x="44" y="84" width="156" height="88" rx="44"/></clipPath>
-            <clipPath id="tagClip"><rect x="286" y="18" width="100" height="22"/></clipPath>
+            <!-- 成形プラスチックの厚み(上が明るく、下へ落ちる) -->
+            <linearGradient id="shellGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#5C584D"/>
+              <stop offset="0.045" stop-color="#403D37"/>
+              <stop offset="0.45" stop-color="#39362F"/>
+              <stop offset="0.92" stop-color="#2A2823"/>
+              <stop offset="1" stop-color="#15140F"/>
+            </linearGradient>
+            <!-- 斜めの映り込み -->
+            <linearGradient id="shellSheen" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.11"/>
+              <stop offset="0.42" stop-color="#FFFFFF" stop-opacity="0.02"/>
+              <stop offset="0.60" stop-color="#FFFFFF" stop-opacity="0.06"/>
+              <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+            </linearGradient>
+            <!-- 紙ラベル(わずかに焼けた質感) -->
+            <linearGradient id="paperGrad" x1="0" y1="0" x2="0.35" y2="1">
+              <stop offset="0" stop-color="#F7F2E9"/>
+              <stop offset="0.5" stop-color="#EAE4D8"/>
+              <stop offset="1" stop-color="#D9D1C0"/>
+            </linearGradient>
+            <!-- 窓のアクリルに乗る光 -->
+            <linearGradient id="glassGrad" x1="0" y1="0" x2="0.85" y2="1">
+              <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.34"/>
+              <stop offset="0.36" stop-color="#FFFFFF" stop-opacity="0.05"/>
+              <stop offset="0.54" stop-color="#FFFFFF" stop-opacity="0.17"/>
+              <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.02"/>
+            </linearGradient>
+            <!--
+              巻かれたテープ。半径に対する比率で色が決まる(objectBoundingBox)ので、
+              JSで r を変えるだけで巻き層の縞がそのまま伸び縮みする。
+            -->
+            <radialGradient id="packGrad">
+              <stop offset="0" stop-color="#141209"/>
+              <stop offset="0.40" stop-color="#1B1813"/>
+              <stop offset="0.425" stop-color="#3C3427"/>
+              <stop offset="0.45" stop-color="#1B1813"/>
+              <stop offset="0.585" stop-color="#211D16"/>
+              <stop offset="0.605" stop-color="#473B2B"/>
+              <stop offset="0.625" stop-color="#211D16"/>
+              <stop offset="0.765" stop-color="#26211A"/>
+              <stop offset="0.785" stop-color="#4C3E2D"/>
+              <stop offset="0.805" stop-color="#26211A"/>
+              <stop offset="0.93" stop-color="#2A241C"/>
+              <stop offset="0.955" stop-color="#55462F"/>
+              <stop offset="0.975" stop-color="#241F19"/>
+              <stop offset="0.995" stop-color="#3E3427"/>
+              <stop offset="1" stop-color="#0B0A08"/>
+            </radialGradient>
+            <radialGradient id="hubGrad" cx="0.36" cy="0.3" r="0.85">
+              <stop offset="0" stop-color="#DAD5C8"/>
+              <stop offset="0.5" stop-color="#A6A296"/>
+              <stop offset="1" stop-color="#6B6860"/>
+            </radialGradient>
+            <radialGradient id="screwGrad" cx="0.35" cy="0.3" r="0.85">
+              <stop offset="0" stop-color="#FF8A5E"/>
+              <stop offset="0.55" stop-color="#EE3B12"/>
+              <stop offset="1" stop-color="#8E1C06"/>
+            </radialGradient>
+            <clipPath id="winClip"><rect x="60" y="118" width="280" height="88" rx="14"/></clipPath>
+            <clipPath id="labelClip"><rect x="24" y="10" width="352" height="100" rx="3"/></clipPath>
+            <filter id="labelShadow" x="-8%" y="-16%" width="120%" height="150%">
+              <feDropShadow dx="0" dy="2.5" stdDeviation="2" flood-color="#000000" flood-opacity="0.5"/>
+            </filter>
           </defs>
 
-          <!-- シェル(メカ部) -->
-          <rect x="0" y="0" width="400" height="252" rx="10" fill="#3A3936"/>
-          <!-- リブ(成形の凹凸) -->
-          <g stroke="#4A4844" stroke-width="2">
-            <line x1="52" y1="20" x2="196" y2="20"/>
-            <line x1="52" y1="28" x2="196" y2="28"/>
-            <line x1="52" y1="226" x2="196" y2="226"/>
-            <line x1="52" y1="234" x2="196" y2="234"/>
-          </g>
-          <!-- 縦組みテキスト -->
-          <text x="30" y="212" fill="#6B6862" font-size="10" font-family="Oswald, sans-serif"
-                letter-spacing="3" transform="rotate(-90 30 212)">COMPACT CASSETTE</text>
+          <!-- ===== シェル(成形プラスチック) ===== -->
+          <rect x="0" y="0" width="400" height="252" rx="9" fill="url(#shellGrad)"/>
+          <rect x="0" y="0" width="400" height="252" rx="9" fill="url(#shellSheen)"/>
+          <rect x="3.5" y="3.5" width="393" height="245" rx="6.5"
+                fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="1.4"/>
+          <rect x="0.8" y="0.8" width="398.4" height="250.4" rx="8.6"
+                fill="none" stroke="#131210" stroke-width="1.6"/>
 
-          <!-- テープ窓(淡いシアンの覗き窓) -->
-          <rect x="44" y="84" width="156" height="88" rx="44" fill="#C8DDE0"/>
-          <g clip-path="url(#winClip)">
-            <!-- オレンジのブロック -->
-            <rect x="52" y="84" width="19" height="88" fill="#EE3B12"/>
-            <rect x="84" y="124" width="76" height="8" fill="#2B2A27"/>
-            <circle id="spoolL" cx="84" cy="128" r="36" fill="#2B2A27"/>
-            <circle id="spoolR" cx="160" cy="128" r="20" fill="#2B2A27"/>
+          <!-- 誤消去防止ツメの窪み(上端) -->
+          <g>
+            <rect x="40" y="0" width="26" height="8" rx="1.5" fill="#141310"/>
+            <rect x="40" y="7" width="26" height="1.4" fill="#6B675E" opacity="0.5"/>
+            <rect x="334" y="0" width="26" height="8" rx="1.5" fill="#141310"/>
+            <rect x="334" y="7" width="26" height="1.4" fill="#6B675E" opacity="0.5"/>
           </g>
-          <!-- ハブ(回転) -->
+
+          <!-- 窓とラベルの間の成形段差 -->
+          <rect x="18" y="113" width="364" height="1" fill="#15140F" opacity="0.75"/>
+          <rect x="18" y="114" width="364" height="1" fill="#6B675E" opacity="0.3"/>
+
+          <!-- ===== テープ窓 ===== -->
+          <!-- 窓の掘り込み(周囲の影) -->
+          <rect x="56" y="114" width="288" height="96" rx="17" fill="#1B1A16" opacity="0.85"/>
+          <rect x="60" y="118" width="280" height="88" rx="14" fill="#0D0C0A"/>
+          <g clip-path="url(#winClip)">
+            <!-- 窓の奥(ハーフの内側) -->
+            <rect x="60" y="118" width="280" height="88" fill="#131210"/>
+            <!-- ハーフ内側の照り返し -->
+            <ellipse cx="150" cy="128" rx="72" ry="9" fill="#FFFFFF" opacity="0.045"/>
+            <!-- リール間に渡るテープ -->
+            <rect x="120" y="159.5" width="160" height="5" fill="#33291D"/>
+            <rect x="120" y="159.5" width="160" height="1.2" fill="#6B573A" opacity="0.55"/>
+            <!-- 巻かれたテープ(半径が再生位置で変わる) -->
+            <circle id="spoolL" cx="130" cy="162" r="42" fill="url(#packGrad)"
+                    stroke="#0A0907" stroke-width="1.1"/>
+            <circle id="spoolR" cx="270" cy="162" r="20" fill="url(#packGrad)"
+                    stroke="#0A0907" stroke-width="1.1"/>
+          </g>
+
+          <!-- ハブ(回転する) -->
           <g id="hubL" class="hub-g">
-            <circle cx="84" cy="128" r="13" fill="#98958E"/>
-            <circle cx="84" cy="128" r="6" fill="#2B2A27"/>
-            <g fill="#2B2A27">
-              <rect x="82.6" y="115.5" width="2.8" height="5.5" transform="rotate(0 84 128)"/>
-              <rect x="82.6" y="115.5" width="2.8" height="5.5" transform="rotate(60 84 128)"/>
-              <rect x="82.6" y="115.5" width="2.8" height="5.5" transform="rotate(120 84 128)"/>
-              <rect x="82.6" y="115.5" width="2.8" height="5.5" transform="rotate(180 84 128)"/>
-              <rect x="82.6" y="115.5" width="2.8" height="5.5" transform="rotate(240 84 128)"/>
-              <rect x="82.6" y="115.5" width="2.8" height="5.5" transform="rotate(300 84 128)"/>
+            <circle cx="130" cy="162" r="19" fill="url(#hubGrad)"/>
+            <circle cx="130" cy="162" r="19" fill="none" stroke="#4E4B44" stroke-width="1"/>
+            <circle cx="130" cy="162" r="9.5" fill="#131210"/>
+            <g fill="#131210">
+              <rect x="128.4" y="147.5" width="3.2" height="6" transform="rotate(0 130 162)"/>
+              <rect x="128.4" y="147.5" width="3.2" height="6" transform="rotate(60 130 162)"/>
+              <rect x="128.4" y="147.5" width="3.2" height="6" transform="rotate(120 130 162)"/>
+              <rect x="128.4" y="147.5" width="3.2" height="6" transform="rotate(180 130 162)"/>
+              <rect x="128.4" y="147.5" width="3.2" height="6" transform="rotate(240 130 162)"/>
+              <rect x="128.4" y="147.5" width="3.2" height="6" transform="rotate(300 130 162)"/>
             </g>
           </g>
           <g id="hubR" class="hub-g">
-            <circle cx="160" cy="128" r="13" fill="#98958E"/>
-            <circle cx="160" cy="128" r="6" fill="#2B2A27"/>
-            <g fill="#2B2A27">
-              <rect x="158.6" y="115.5" width="2.8" height="5.5" transform="rotate(0 160 128)"/>
-              <rect x="158.6" y="115.5" width="2.8" height="5.5" transform="rotate(60 160 128)"/>
-              <rect x="158.6" y="115.5" width="2.8" height="5.5" transform="rotate(120 160 128)"/>
-              <rect x="158.6" y="115.5" width="2.8" height="5.5" transform="rotate(180 160 128)"/>
-              <rect x="158.6" y="115.5" width="2.8" height="5.5" transform="rotate(240 160 128)"/>
-              <rect x="158.6" y="115.5" width="2.8" height="5.5" transform="rotate(300 160 128)"/>
+            <circle cx="270" cy="162" r="19" fill="url(#hubGrad)"/>
+            <circle cx="270" cy="162" r="19" fill="none" stroke="#4E4B44" stroke-width="1"/>
+            <circle cx="270" cy="162" r="9.5" fill="#131210"/>
+            <g fill="#131210">
+              <rect x="268.4" y="147.5" width="3.2" height="6" transform="rotate(0 270 162)"/>
+              <rect x="268.4" y="147.5" width="3.2" height="6" transform="rotate(60 270 162)"/>
+              <rect x="268.4" y="147.5" width="3.2" height="6" transform="rotate(120 270 162)"/>
+              <rect x="268.4" y="147.5" width="3.2" height="6" transform="rotate(180 270 162)"/>
+              <rect x="268.4" y="147.5" width="3.2" height="6" transform="rotate(240 270 162)"/>
+              <rect x="268.4" y="147.5" width="3.2" height="6" transform="rotate(300 270 162)"/>
             </g>
           </g>
 
-          <!-- ヘッド開口部 -->
-          <path d="M62 252 L182 252 L170 206 L74 206 Z" fill="#2B2A27"/>
-          <circle cx="96" cy="232" r="6" fill="#141413"/>
-          <circle cx="148" cy="232" r="6" fill="#141413"/>
-          <rect x="112" y="214" width="20" height="12" fill="#141413"/>
+          <!-- 窓のアクリル(映り込み)と縁 -->
+          <rect x="60" y="118" width="280" height="88" rx="14" fill="url(#glassGrad)" pointer-events="none"/>
+          <rect x="60.7" y="118.7" width="278.6" height="86.6" rx="13.3"
+                fill="none" stroke="#0A0908" stroke-width="1.4"/>
+          <rect x="59" y="117" width="282" height="90" rx="15"
+                fill="none" stroke="#6E6A60" stroke-opacity="0.45" stroke-width="1"/>
 
-          <!-- 赤いネジ -->
+          <!-- ===== 下端(ヘッド開口部) ===== -->
+          <rect x="112" y="207" width="176" height="4" fill="#3A3125"/>
+          <path d="M104 252 L104 218 Q104 212 110 212 L290 212 Q296 212 296 218 L296 252 Z" fill="#262421"/>
+          <path d="M104 252 L104 218 Q104 212 110 212 L290 212 Q296 212 296 218"
+                fill="none" stroke="#15140F" stroke-width="1.4"/>
+          <g fill="#0D0C0A">
+            <rect x="172" y="218" width="56" height="34" rx="1.5"/>
+            <rect x="150" y="218" width="13" height="34" rx="1.5"/>
+            <rect x="237" y="218" width="13" height="34" rx="1.5"/>
+            <circle cx="132" cy="234" r="9"/>
+            <circle cx="268" cy="234" r="9"/>
+            <circle cx="114" cy="240" r="3.5"/>
+            <circle cx="286" cy="240" r="3.5"/>
+          </g>
+          <!-- ヘッドに当たるパッド -->
+          <rect x="186" y="224" width="28" height="9" rx="1" fill="#55514A"/>
+          <rect x="186" y="224" width="28" height="2.5" fill="#7A7469" opacity="0.7"/>
+
+          <!-- ===== シェルの刻印とリブ ===== -->
+          <g font-family="Oswald, sans-serif" font-size="6.5" letter-spacing="1">
+            <text x="22" y="231" fill="#131210">COMPACT CASSETTE</text>
+            <text x="22" y="230" fill="#6E6A61">COMPACT CASSETTE</text>
+            <text x="378" y="231" text-anchor="end" fill="#131210">TYPE I  NORMAL</text>
+            <text x="378" y="230" text-anchor="end" fill="#6E6A61">TYPE I  NORMAL</text>
+          </g>
+          <g stroke-width="1.2">
+            <g stroke="#15140F">
+              <line x1="22" y1="238" x2="98" y2="238"/><line x1="22" y1="243" x2="98" y2="243"/>
+              <line x1="302" y1="238" x2="378" y2="238"/><line x1="302" y1="243" x2="378" y2="243"/>
+            </g>
+            <g stroke="#6E6A61" stroke-opacity="0.4">
+              <line x1="22" y1="239.4" x2="98" y2="239.4"/><line x1="22" y1="244.4" x2="98" y2="244.4"/>
+              <line x1="302" y1="239.4" x2="378" y2="239.4"/><line x1="302" y1="244.4" x2="378" y2="244.4"/>
+            </g>
+          </g>
+
+          <!-- ===== ネジ(掘り込み + 頭) ===== -->
           <g>
-            <circle cx="20" cy="20" r="8" fill="#2B2A27"/><circle cx="20" cy="20" r="4.5" fill="#EE3B12"/>
-            <circle cx="20" cy="232" r="8" fill="#2B2A27"/><circle cx="20" cy="232" r="4.5" fill="#EE3B12"/>
+            <circle cx="13" cy="13" r="7.5" fill="#131210"/>
+            <circle cx="13" cy="13" r="7.5" fill="none" stroke="#6E6A61" stroke-opacity="0.35" stroke-width="1"/>
+            <circle cx="13" cy="13" r="4.6" fill="url(#screwGrad)"/>
+            <rect x="8.9" y="12.3" width="8.2" height="1.4" fill="#7A1B05" opacity="0.8"/>
+            <circle cx="387" cy="13" r="7.5" fill="#131210"/>
+            <circle cx="387" cy="13" r="7.5" fill="none" stroke="#6E6A61" stroke-opacity="0.35" stroke-width="1"/>
+            <circle cx="387" cy="13" r="4.6" fill="url(#screwGrad)"/>
+            <rect x="382.9" y="12.3" width="8.2" height="1.4" fill="#7A1B05" opacity="0.8"/>
+            <circle cx="13" cy="239" r="7.5" fill="#131210"/>
+            <circle cx="13" cy="239" r="7.5" fill="none" stroke="#6E6A61" stroke-opacity="0.35" stroke-width="1"/>
+            <circle cx="13" cy="239" r="4.6" fill="url(#screwGrad)"/>
+            <rect x="8.9" y="238.3" width="8.2" height="1.4" fill="#7A1B05" opacity="0.8"/>
+            <circle cx="387" cy="239" r="7.5" fill="#131210"/>
+            <circle cx="387" cy="239" r="7.5" fill="none" stroke="#6E6A61" stroke-opacity="0.35" stroke-width="1"/>
+            <circle cx="387" cy="239" r="4.6" fill="url(#screwGrad)"/>
+            <rect x="382.9" y="238.3" width="8.2" height="1.4" fill="#7A1B05" opacity="0.8"/>
           </g>
 
-          <!-- ラベル面(切り欠き付き) -->
-          <path d="M214 0 L390 0 Q400 0 400 10 L400 242 Q400 252 390 252 L214 252 L214 146 Q204 138 214 128 Z" fill="#E8E2D5"/>
+          <!-- ===== 貼られた紙ラベル ===== -->
+          <g filter="url(#labelShadow)">
+            <rect x="24" y="10" width="352" height="100" rx="3" fill="url(#paperGrad)"/>
+          </g>
+          <g clip-path="url(#labelClip)">
+            <!-- 上端のストライプ帯(ヘッダー・VUメーターと共通の意匠) -->
+            <rect x="24" y="10" width="58.7" height="5" fill="#F5B415"/>
+            <rect x="82.7" y="10" width="58.7" height="5" fill="#F0930E"/>
+            <rect x="141.4" y="10" width="58.7" height="5" fill="#F07C10"/>
+            <rect x="200.1" y="10" width="58.7" height="5" fill="#E2371F"/>
+            <rect x="258.8" y="10" width="58.7" height="5" fill="#B32036"/>
+            <rect x="317.5" y="10" width="58.5" height="5" fill="#7B1F42"/>
+            <!-- 紙の折り目・退色 -->
+            <rect x="24" y="15" width="352" height="1" fill="#B7AF9E" opacity="0.5"/>
+            <rect x="24" y="96" width="352" height="14" fill="#C9C0AC" opacity="0.35"/>
+          </g>
+          <rect x="24.6" y="10.6" width="350.8" height="98.8" rx="2.6"
+                fill="none" stroke="#B7AF9E" stroke-width="1.2"/>
 
-          <!-- タグ + ハッチング -->
-          <rect x="228" y="18" width="34" height="22" fill="#EE3B12"/>
-          <text x="245" y="34" text-anchor="middle" fill="#E8E2D5" font-size="13" font-weight="700" font-family="'Archivo Black', sans-serif">CP</text>
-          <text x="228" y="13" fill="#5C5A54" font-size="6" letter-spacing="1.1" font-family="Oswald, sans-serif">PLAYER SYSTEM</text>
-          <circle cx="272" cy="34" r="3.5" fill="#33322E"/>
-          <g clip-path="url(#tagClip)">
-            <g fill="#EE3B12">
-              <rect x="286" y="10" width="13" height="38" transform="skewX(-20)"/>
-              <rect x="308" y="10" width="13" height="38" transform="skewX(-20)"/>
-              <rect x="330" y="10" width="13" height="38" transform="skewX(-20)"/>
-              <rect x="352" y="10" width="13" height="38" transform="skewX(-20)"/>
-            </g>
-          </g>
-
-          <!-- 罫線束(ジャケットが無いとき) -->
-          <g class="rule-full" stroke="#5C5A54" stroke-width="1.6">
-            <line x1="228" y1="150" x2="386" y2="150"/>
-            <line x1="228" y1="156" x2="386" y2="156"/>
-            <line x1="228" y1="162" x2="386" y2="162"/>
-            <line x1="228" y1="168" x2="386" y2="168"/>
-            <line x1="228" y1="174" x2="386" y2="174"/>
-          </g>
-          <!-- ジャケットがあるときは、その横に短い罫線を添える -->
-          <g class="rule-short" stroke="#5C5A54" stroke-width="1.6">
-            <line x1="296" y1="126" x2="386" y2="126"/>
-            <line x1="296" y1="134" x2="386" y2="134"/>
-            <line x1="296" y1="142" x2="386" y2="142"/>
-            <line x1="296" y1="150" x2="386" y2="150"/>
-            <line x1="296" y1="164" x2="386" y2="164"/>
-          </g>
           <!-- ジャケットの枠(画像はHTML側で重ねる) -->
-          <rect class="art-frame" x="228" y="116" width="58" height="58" fill="#DCD5C6" stroke="#33322E" stroke-width="1.6"/>
+          <rect class="art-frame" x="32" y="24" width="72" height="72" fill="#DCD5C6"
+                stroke="#33322E" stroke-width="1.4"/>
+          <!-- ジャケットが無いときの罫線 -->
+          <g class="rule-full" stroke="#8A867C" stroke-width="1.4">
+            <line x1="40" y1="42" x2="96" y2="42"/>
+            <line x1="40" y1="52" x2="96" y2="52"/>
+            <line x1="40" y1="62" x2="96" y2="62"/>
+            <line x1="40" y1="72" x2="96" y2="72"/>
+            <line x1="40" y1="82" x2="78" y2="82"/>
+          </g>
 
-          <!-- シリアル番号 -->
-          <text x="228" y="192" fill="#EE3B12" font-size="8" font-weight="600" letter-spacing="1.3" font-family="Oswald, sans-serif">SERIAL NUMBER</text>
-          <text id="cSerial" x="228" y="204" fill="#EE3B12" font-size="8.5" letter-spacing="1" font-family="Oswald, sans-serif">SBZR-0000-CA30</text>
+          <!-- 面表示 -->
+          <rect x="344" y="24" width="26" height="26" fill="#EE3B12"/>
+          <text x="357" y="44" text-anchor="middle" fill="#F7F2E9" font-size="17"
+                font-family="'Archivo Black', sans-serif">A</text>
 
-          <!-- SIDE A + 巨大数字 -->
-          <text x="386" y="242" text-anchor="end" fill="#33322E" opacity="0.22" font-size="52" font-family="'Archivo Black', sans-serif">A</text>
-          <text x="228" y="240" fill="#33322E" font-size="11" font-weight="600" letter-spacing="2" font-family="Oswald, sans-serif">SIDE A</text>
-          <path d="M300 228 L316 228 L308 240 Z" fill="#EE3B12"/>
+          <!-- ラベル下段(罫線 + シリアル) -->
+          <line x1="120" y1="99" x2="370" y2="99" stroke="#B7AF9E" stroke-width="1.2"/>
+          <text id="cSerial" x="120" y="107" fill="#EE3B12" font-size="7.5" letter-spacing="1"
+                font-family="Oswald, sans-serif">SBZR-0000-CA30</text>
+          <text x="370" y="107" text-anchor="end" fill="#5C5A54" font-size="7.5" letter-spacing="1.4"
+                font-family="Oswald, sans-serif">SIDE A / 60 MIN</text>
         </svg>
         <div class="c-label-overlay">
           <div class="c-title" id="cTitle">-</div>

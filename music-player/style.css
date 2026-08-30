@@ -423,32 +423,30 @@ body {
 .cassette-svg { display: block; width: 100%; height: auto; }
 .hub-g { transform-box: fill-box; transform-origin: center; }
 
-/* ラベル面のジャケット。SVGの枠(x228 y100 58x58 / 全体400x252)にぴたりと重ねる */
+/* ラベルのジャケット。SVGの枠(x32 y24 72x72 / 全体400x252)にぴたりと重ねる */
 .c-art {
   position: absolute;
-  left: 57%;
-  top: 46.03%;
-  width: 14.5%;
-  height: 23.02%;
+  left: 8%;
+  top: 9.524%;
+  width: 18%;
+  height: 28.571%;
   object-fit: cover;
   pointer-events: none;
 }
-/* ジャケットの有無で罫線の出し分けをする */
-.rule-short, .art-frame { display: none; }
-.cassette-wrap.has-art .rule-short, .cassette-wrap.has-art .art-frame { display: block; }
+/* ジャケットがあるときは、枠の中の罫線を隠して画像に譲る */
 .cassette-wrap.has-art .rule-full { display: none; }
 
-/* ラベル面に重ねる曲名 */
+/* ラベルに重ねる曲名 */
 .c-label-overlay {
   position: absolute;
-  left: 57%;
-  top: 19%;
-  width: 39.5%;
+  left: 30%;
+  top: 9.524%;
+  width: 54.5%;
   pointer-events: none;
 }
 .c-title {
   font-family: var(--fd);
-  font-size: clamp(1rem, 5vw, 1.6rem);
+  font-size: clamp(1rem, 5.4vw, 1.75rem);
   line-height: 1.08;
   letter-spacing: -0.03em;
   color: #33322E;
