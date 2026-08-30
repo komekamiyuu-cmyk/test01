@@ -100,32 +100,42 @@
         <svg class="cassette-svg" viewBox="0 0 400 252" aria-hidden="true">
           <defs>
             <!-- 成形プラスチックの厚み(上が明るく、下へ落ちる) -->
-            <linearGradient id="shellGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0" stop-color="#5C584D"/>
-              <stop offset="0.045" stop-color="#403D37"/>
-              <stop offset="0.45" stop-color="#39362F"/>
-              <stop offset="0.92" stop-color="#2A2823"/>
-              <stop offset="1" stop-color="#15140F"/>
+            <linearGradient id="shellGrad" x1="0" y1="0" x2="0.15" y2="1">
+              <stop offset="0" stop-color="#5E5A4F"/>
+              <stop offset="0.04" stop-color="#413E37"/>
+              <stop offset="0.30" stop-color="#3B382F"/>
+              <stop offset="0.72" stop-color="#312E28"/>
+              <stop offset="0.94" stop-color="#26241F"/>
+              <stop offset="1" stop-color="#13120E"/>
             </linearGradient>
             <!-- 斜めの映り込み -->
             <linearGradient id="shellSheen" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.11"/>
-              <stop offset="0.42" stop-color="#FFFFFF" stop-opacity="0.02"/>
-              <stop offset="0.60" stop-color="#FFFFFF" stop-opacity="0.06"/>
+              <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.12"/>
+              <stop offset="0.30" stop-color="#FFFFFF" stop-opacity="0.02"/>
+              <stop offset="0.52" stop-color="#FFFFFF" stop-opacity="0.07"/>
+              <stop offset="0.66" stop-color="#FFFFFF" stop-opacity="0.01"/>
               <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
             </linearGradient>
             <!-- 紙ラベル(わずかに焼けた質感) -->
             <linearGradient id="paperGrad" x1="0" y1="0" x2="0.35" y2="1">
-              <stop offset="0" stop-color="#F7F2E9"/>
+              <stop offset="0" stop-color="#F8F3EA"/>
               <stop offset="0.5" stop-color="#EAE4D8"/>
-              <stop offset="1" stop-color="#D9D1C0"/>
+              <stop offset="1" stop-color="#D7CFBE"/>
+            </linearGradient>
+            <!-- 窓の面取り(左上が光り、右下が落ちる) -->
+            <linearGradient id="chamfer" x1="0.1" y1="0" x2="0.7" y2="1">
+              <stop offset="0" stop-color="#948E81"/>
+              <stop offset="0.42" stop-color="#3C3931"/>
+              <stop offset="1" stop-color="#100F0C"/>
             </linearGradient>
             <!-- 窓のアクリルに乗る光 -->
             <linearGradient id="glassGrad" x1="0" y1="0" x2="0.85" y2="1">
-              <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.34"/>
-              <stop offset="0.36" stop-color="#FFFFFF" stop-opacity="0.05"/>
-              <stop offset="0.54" stop-color="#FFFFFF" stop-opacity="0.17"/>
-              <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.02"/>
+              <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.13"/>
+              <stop offset="0.10" stop-color="#FFFFFF" stop-opacity="0.02"/>
+              <stop offset="0.455" stop-color="#FFFFFF" stop-opacity="0.012"/>
+              <stop offset="0.485" stop-color="#FFFFFF" stop-opacity="0.085"/>
+              <stop offset="0.515" stop-color="#FFFFFF" stop-opacity="0.012"/>
+              <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.006"/>
             </linearGradient>
             <!--
               巻かれたテープ。半径に対する比率で色が決まる(objectBoundingBox)ので、
@@ -133,166 +143,223 @@
             -->
             <radialGradient id="packGrad">
               <stop offset="0" stop-color="#141209"/>
-              <stop offset="0.40" stop-color="#1B1813"/>
-              <stop offset="0.425" stop-color="#3C3427"/>
-              <stop offset="0.45" stop-color="#1B1813"/>
-              <stop offset="0.585" stop-color="#211D16"/>
-              <stop offset="0.605" stop-color="#473B2B"/>
-              <stop offset="0.625" stop-color="#211D16"/>
-              <stop offset="0.765" stop-color="#26211A"/>
-              <stop offset="0.785" stop-color="#4C3E2D"/>
-              <stop offset="0.805" stop-color="#26211A"/>
-              <stop offset="0.93" stop-color="#2A241C"/>
-              <stop offset="0.955" stop-color="#55462F"/>
+              <stop offset="0.40" stop-color="#221E17"/>
+              <stop offset="0.425" stop-color="#4A4030"/>
+              <stop offset="0.45" stop-color="#221E17"/>
+              <stop offset="0.585" stop-color="#29241C"/>
+              <stop offset="0.605" stop-color="#574836"/>
+              <stop offset="0.625" stop-color="#29241C"/>
+              <stop offset="0.765" stop-color="#2E281F"/>
+              <stop offset="0.785" stop-color="#5E4D39"/>
+              <stop offset="0.805" stop-color="#2E281F"/>
+              <stop offset="0.93" stop-color="#332C22"/>
+              <stop offset="0.955" stop-color="#6A573B"/>
               <stop offset="0.975" stop-color="#241F19"/>
-              <stop offset="0.995" stop-color="#3E3427"/>
+              <stop offset="0.995" stop-color="#4A3E2D"/>
               <stop offset="1" stop-color="#0B0A08"/>
             </radialGradient>
+            <!-- 巻いたテープの上に乗る照り(半径と一緒に動く) -->
+            <radialGradient id="packSheen" cx="0.34" cy="0.26" r="0.62">
+              <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.11"/>
+              <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.035"/>
+              <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+            </radialGradient>
             <radialGradient id="hubGrad" cx="0.36" cy="0.3" r="0.85">
-              <stop offset="0" stop-color="#DAD5C8"/>
-              <stop offset="0.5" stop-color="#A6A296"/>
-              <stop offset="1" stop-color="#6B6860"/>
+              <stop offset="0" stop-color="#DED9CC"/>
+              <stop offset="0.45" stop-color="#A6A296"/>
+              <stop offset="1" stop-color="#63605A"/>
             </radialGradient>
-            <radialGradient id="screwGrad" cx="0.35" cy="0.3" r="0.85">
-              <stop offset="0" stop-color="#FF8A5E"/>
-              <stop offset="0.55" stop-color="#EE3B12"/>
-              <stop offset="1" stop-color="#8E1C06"/>
+            <radialGradient id="rollerGrad" cx="0.35" cy="0.3" r="0.85">
+              <stop offset="0" stop-color="#C6C0B2"/>
+              <stop offset="0.55" stop-color="#7E7A71"/>
+              <stop offset="1" stop-color="#3A3832"/>
             </radialGradient>
-            <clipPath id="winClip"><rect x="60" y="118" width="280" height="88" rx="14"/></clipPath>
+            <radialGradient id="screwGrad" cx="0.34" cy="0.28" r="0.9">
+              <stop offset="0" stop-color="#CFC9BB"/>
+              <stop offset="0.45" stop-color="#8B877D"/>
+              <stop offset="1" stop-color="#3B3832"/>
+            </radialGradient>
+
+            <clipPath id="winClip"><rect x="56" y="114" width="288" height="96" rx="15"/></clipPath>
             <clipPath id="labelClip"><rect x="24" y="10" width="352" height="100" rx="3"/></clipPath>
-            <filter id="labelShadow" x="-8%" y="-16%" width="120%" height="150%">
-              <feDropShadow dx="0" dy="2.5" stdDeviation="2" flood-color="#000000" flood-opacity="0.5"/>
+
+            <!-- 表面のざらつき。これが無いと、どれだけ陰影を足しても図に見える -->
+            <filter id="grain" x="0" y="0" width="100%" height="100%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/>
+              <feColorMatrix type="saturate" values="0"/>
+            </filter>
+            <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="3.2"/>
+            </filter>
+            <filter id="labelShadow" x="-8%" y="-16%" width="120%" height="155%">
+              <feDropShadow dx="0" dy="1.2" stdDeviation="0.9" flood-color="#000000" flood-opacity="0.55"/>
+              <feDropShadow dx="0" dy="3" stdDeviation="3.4" flood-color="#000000" flood-opacity="0.4"/>
             </filter>
           </defs>
 
           <!-- ===== シェル(成形プラスチック) ===== -->
           <rect x="0" y="0" width="400" height="252" rx="9" fill="url(#shellGrad)"/>
           <rect x="0" y="0" width="400" height="252" rx="9" fill="url(#shellSheen)"/>
-          <rect x="3.5" y="3.5" width="393" height="245" rx="6.5"
-                fill="none" stroke="#FFFFFF" stroke-opacity="0.09" stroke-width="1.4"/>
+          <!-- 上面に落ちる光 -->
+          <ellipse cx="196" cy="3" rx="150" ry="9" fill="#FFFFFF" opacity="0.10" filter="url(#soft)"/>
+          <!-- 成形のざらつき -->
+          <rect x="0" y="0" width="400" height="252" rx="9" filter="url(#grain)"
+                opacity="0.08" style="mix-blend-mode:overlay"/>
+          <!-- 上下ハーフの合わせ目 -->
+          <rect x="5" y="5" width="390" height="242" rx="5.5"
+                fill="none" stroke="#100F0C" stroke-opacity="0.75" stroke-width="1"/>
+          <rect x="5" y="6.2" width="390" height="242" rx="5.5"
+                fill="none" stroke="#FFFFFF" stroke-opacity="0.07" stroke-width="1"/>
           <rect x="0.8" y="0.8" width="398.4" height="250.4" rx="8.6"
-                fill="none" stroke="#131210" stroke-width="1.6"/>
+                fill="none" stroke="#121110" stroke-width="1.6"/>
 
           <!-- 誤消去防止ツメの窪み(上端) -->
           <g>
-            <rect x="40" y="0" width="26" height="8" rx="1.5" fill="#141310"/>
+            <rect x="40" y="0" width="26" height="8" rx="1.5" fill="#131210"/>
             <rect x="40" y="7" width="26" height="1.4" fill="#6B675E" opacity="0.5"/>
-            <rect x="334" y="0" width="26" height="8" rx="1.5" fill="#141310"/>
+            <rect x="334" y="0" width="26" height="8" rx="1.5" fill="#131210"/>
             <rect x="334" y="7" width="26" height="1.4" fill="#6B675E" opacity="0.5"/>
           </g>
 
-          <!-- 窓とラベルの間の成形段差 -->
-          <rect x="18" y="113" width="364" height="1" fill="#15140F" opacity="0.75"/>
-          <rect x="18" y="114" width="364" height="1" fill="#6B675E" opacity="0.3"/>
-
           <!-- ===== テープ窓 ===== -->
-          <!-- 窓の掘り込み(周囲の影) -->
-          <rect x="56" y="114" width="288" height="96" rx="17" fill="#1B1A16" opacity="0.85"/>
-          <rect x="60" y="118" width="280" height="88" rx="14" fill="#0D0C0A"/>
+          <!-- 掘り込みの落ち影 -->
+          <rect x="54" y="112" width="292" height="100" rx="17" fill="#0F0E0C"
+                opacity="0.7" filter="url(#soft)"/>
+          <!-- 面取り -->
+          <rect x="54.5" y="112.5" width="291" height="99" rx="16.5"
+                fill="none" stroke="url(#chamfer)" stroke-width="3"/>
+          <rect x="56" y="114" width="288" height="96" rx="15" fill="#0C0B09"/>
+
           <g clip-path="url(#winClip)">
-            <!-- 窓の奥(ハーフの内側) -->
-            <rect x="60" y="118" width="280" height="88" fill="#131210"/>
-            <!-- ハーフ内側の照り返し -->
-            <ellipse cx="150" cy="128" rx="72" ry="9" fill="#FFFFFF" opacity="0.045"/>
-            <!-- リール間に渡るテープ -->
-            <rect x="120" y="159.5" width="160" height="5" fill="#33291D"/>
-            <rect x="120" y="159.5" width="160" height="1.2" fill="#6B573A" opacity="0.55"/>
+            <!-- 窓の奥(ハーフの内壁) -->
+            <rect x="56" y="114" width="288" height="96" fill="#1A1714"/>
+            <ellipse cx="150" cy="122" rx="76" ry="8" fill="#FFFFFF" opacity="0.035"/>
+
+            <!-- テープの経路:巻きから下のガイドへ降り、前面を横切る -->
+            <g stroke="#2E2418" stroke-width="3.6" fill="none">
+              <line x1="78" y1="199" x2="128" y2="156"/>
+              <line x1="322" y1="199" x2="272" y2="156"/>
+            </g>
+
             <!-- 巻かれたテープ(半径が再生位置で変わる) -->
-            <circle id="spoolL" cx="130" cy="162" r="42" fill="url(#packGrad)"
+            <circle id="spoolL" cx="128" cy="156" r="36" fill="url(#packGrad)"
                     stroke="#0A0907" stroke-width="1.1"/>
-            <circle id="spoolR" cx="270" cy="162" r="20" fill="url(#packGrad)"
+            <circle id="spoolLGloss" cx="128" cy="156" r="36" fill="url(#packSheen)"/>
+            <circle id="spoolR" cx="272" cy="156" r="20" fill="url(#packGrad)"
                     stroke="#0A0907" stroke-width="1.1"/>
+            <circle id="spoolRGloss" cx="272" cy="156" r="20" fill="url(#packSheen)"/>
+
+            <!-- 前面を横切るテープとガイドローラー -->
+            <line x1="78" y1="199" x2="322" y2="199" stroke="#2E2418" stroke-width="3.6"/>
+            <line x1="78" y1="197.6" x2="322" y2="197.6" stroke="#6E5A3C" stroke-width="0.9" opacity="0.55"/>
+            <g>
+              <circle cx="78" cy="199" r="5" fill="url(#rollerGrad)"/>
+              <circle cx="78" cy="199" r="1.9" fill="#141310"/>
+              <circle cx="322" cy="199" r="5" fill="url(#rollerGrad)"/>
+              <circle cx="322" cy="199" r="1.9" fill="#141310"/>
+            </g>
+
+            <!-- 掘り込みの内側に回り込む影 -->
+            <rect x="56" y="114" width="288" height="96" rx="15" fill="none"
+                  stroke="#000000" stroke-width="11" opacity="0.5" filter="url(#soft)"/>
           </g>
 
           <!-- ハブ(回転する) -->
           <g id="hubL" class="hub-g">
-            <circle cx="130" cy="162" r="19" fill="url(#hubGrad)"/>
-            <circle cx="130" cy="162" r="19" fill="none" stroke="#4E4B44" stroke-width="1"/>
-            <circle cx="130" cy="162" r="9.5" fill="#131210"/>
-            <g fill="#131210">
-              <rect x="128.4" y="147.5" width="3.2" height="6" transform="rotate(0 130 162)"/>
-              <rect x="128.4" y="147.5" width="3.2" height="6" transform="rotate(60 130 162)"/>
-              <rect x="128.4" y="147.5" width="3.2" height="6" transform="rotate(120 130 162)"/>
-              <rect x="128.4" y="147.5" width="3.2" height="6" transform="rotate(180 130 162)"/>
-              <rect x="128.4" y="147.5" width="3.2" height="6" transform="rotate(240 130 162)"/>
-              <rect x="128.4" y="147.5" width="3.2" height="6" transform="rotate(300 130 162)"/>
+            <circle cx="128" cy="156" r="19" fill="url(#hubGrad)"/>
+            <circle cx="128" cy="156" r="19" fill="none" stroke="#4A473F" stroke-width="1"/>
+            <circle cx="128" cy="156" r="9.5" fill="#121110"/>
+            <g fill="#121110">
+              <rect x="126.4" y="141.5" width="3.2" height="6" transform="rotate(0 128 156)"/>
+              <rect x="126.4" y="141.5" width="3.2" height="6" transform="rotate(60 128 156)"/>
+              <rect x="126.4" y="141.5" width="3.2" height="6" transform="rotate(120 128 156)"/>
+              <rect x="126.4" y="141.5" width="3.2" height="6" transform="rotate(180 128 156)"/>
+              <rect x="126.4" y="141.5" width="3.2" height="6" transform="rotate(240 128 156)"/>
+              <rect x="126.4" y="141.5" width="3.2" height="6" transform="rotate(300 128 156)"/>
             </g>
           </g>
           <g id="hubR" class="hub-g">
-            <circle cx="270" cy="162" r="19" fill="url(#hubGrad)"/>
-            <circle cx="270" cy="162" r="19" fill="none" stroke="#4E4B44" stroke-width="1"/>
-            <circle cx="270" cy="162" r="9.5" fill="#131210"/>
-            <g fill="#131210">
-              <rect x="268.4" y="147.5" width="3.2" height="6" transform="rotate(0 270 162)"/>
-              <rect x="268.4" y="147.5" width="3.2" height="6" transform="rotate(60 270 162)"/>
-              <rect x="268.4" y="147.5" width="3.2" height="6" transform="rotate(120 270 162)"/>
-              <rect x="268.4" y="147.5" width="3.2" height="6" transform="rotate(180 270 162)"/>
-              <rect x="268.4" y="147.5" width="3.2" height="6" transform="rotate(240 270 162)"/>
-              <rect x="268.4" y="147.5" width="3.2" height="6" transform="rotate(300 270 162)"/>
+            <circle cx="272" cy="156" r="19" fill="url(#hubGrad)"/>
+            <circle cx="272" cy="156" r="19" fill="none" stroke="#4A473F" stroke-width="1"/>
+            <circle cx="272" cy="156" r="9.5" fill="#121110"/>
+            <g fill="#121110">
+              <rect x="270.4" y="141.5" width="3.2" height="6" transform="rotate(0 272 156)"/>
+              <rect x="270.4" y="141.5" width="3.2" height="6" transform="rotate(60 272 156)"/>
+              <rect x="270.4" y="141.5" width="3.2" height="6" transform="rotate(120 272 156)"/>
+              <rect x="270.4" y="141.5" width="3.2" height="6" transform="rotate(180 272 156)"/>
+              <rect x="270.4" y="141.5" width="3.2" height="6" transform="rotate(240 272 156)"/>
+              <rect x="270.4" y="141.5" width="3.2" height="6" transform="rotate(300 272 156)"/>
             </g>
           </g>
 
           <!-- 窓のアクリル(映り込み)と縁 -->
-          <rect x="60" y="118" width="280" height="88" rx="14" fill="url(#glassGrad)" pointer-events="none"/>
-          <rect x="60.7" y="118.7" width="278.6" height="86.6" rx="13.3"
+          <rect x="56" y="114" width="288" height="96" rx="15" fill="url(#glassGrad)" pointer-events="none"/>
+          <rect x="56.7" y="114.7" width="286.6" height="94.6" rx="14.3"
                 fill="none" stroke="#0A0908" stroke-width="1.4"/>
-          <rect x="59" y="117" width="282" height="90" rx="15"
-                fill="none" stroke="#6E6A60" stroke-opacity="0.45" stroke-width="1"/>
 
           <!-- ===== 下端(ヘッド開口部) ===== -->
-          <rect x="112" y="207" width="176" height="4" fill="#3A3125"/>
-          <path d="M104 252 L104 218 Q104 212 110 212 L290 212 Q296 212 296 218 L296 252 Z" fill="#262421"/>
-          <path d="M104 252 L104 218 Q104 212 110 212 L290 212 Q296 212 296 218"
-                fill="none" stroke="#15140F" stroke-width="1.4"/>
-          <g fill="#0D0C0A">
-            <rect x="172" y="218" width="56" height="34" rx="1.5"/>
-            <rect x="150" y="218" width="13" height="34" rx="1.5"/>
-            <rect x="237" y="218" width="13" height="34" rx="1.5"/>
-            <circle cx="132" cy="234" r="9"/>
-            <circle cx="268" cy="234" r="9"/>
-            <circle cx="114" cy="240" r="3.5"/>
-            <circle cx="286" cy="240" r="3.5"/>
+          <path d="M104 252 L104 220 Q104 214 110 214 L290 214 Q296 214 296 220 L296 252 Z" fill="#242220"/>
+          <path d="M104 252 L104 220 Q104 214 110 214 L290 214 Q296 214 296 220"
+                fill="none" stroke="#131210" stroke-width="1.4"/>
+          <path d="M104 252 L104 220 Q104 214 110 214 L290 214 Q296 214 296 220"
+                fill="none" stroke="#FFFFFF" stroke-opacity="0.06" stroke-width="1" transform="translate(0 1.4)"/>
+          <g fill="#0C0B09">
+            <rect x="172" y="220" width="56" height="32" rx="1.5"/>
+            <rect x="150" y="220" width="13" height="32" rx="1.5"/>
+            <rect x="237" y="220" width="13" height="32" rx="1.5"/>
+            <circle cx="132" cy="236" r="8.5"/>
+            <circle cx="268" cy="236" r="8.5"/>
+            <circle cx="114" cy="242" r="3.5"/>
+            <circle cx="286" cy="242" r="3.5"/>
           </g>
           <!-- ヘッドに当たるパッド -->
-          <rect x="186" y="224" width="28" height="9" rx="1" fill="#55514A"/>
-          <rect x="186" y="224" width="28" height="2.5" fill="#7A7469" opacity="0.7"/>
+          <rect x="186" y="226" width="28" height="9" rx="1" fill="#54504A"/>
+          <rect x="186" y="226" width="28" height="2.5" fill="#7A7469" opacity="0.7"/>
 
           <!-- ===== シェルの刻印とリブ ===== -->
           <g font-family="Oswald, sans-serif" font-size="6.5" letter-spacing="1">
-            <text x="22" y="231" fill="#131210">COMPACT CASSETTE</text>
-            <text x="22" y="230" fill="#6E6A61">COMPACT CASSETTE</text>
-            <text x="378" y="231" text-anchor="end" fill="#131210">TYPE I  NORMAL</text>
-            <text x="378" y="230" text-anchor="end" fill="#6E6A61">TYPE I  NORMAL</text>
+            <text x="22" y="233" fill="#121110">COMPACT CASSETTE</text>
+            <text x="22" y="232" fill="#6E6A61">COMPACT CASSETTE</text>
+            <text x="378" y="233" text-anchor="end" fill="#121110">TYPE I  NORMAL</text>
+            <text x="378" y="232" text-anchor="end" fill="#6E6A61">TYPE I  NORMAL</text>
           </g>
           <g stroke-width="1.2">
-            <g stroke="#15140F">
-              <line x1="22" y1="238" x2="98" y2="238"/><line x1="22" y1="243" x2="98" y2="243"/>
-              <line x1="302" y1="238" x2="378" y2="238"/><line x1="302" y1="243" x2="378" y2="243"/>
+            <g stroke="#131210">
+              <line x1="22" y1="240" x2="98" y2="240"/><line x1="22" y1="245" x2="98" y2="245"/>
+              <line x1="302" y1="240" x2="378" y2="240"/><line x1="302" y1="245" x2="378" y2="245"/>
             </g>
             <g stroke="#6E6A61" stroke-opacity="0.4">
-              <line x1="22" y1="239.4" x2="98" y2="239.4"/><line x1="22" y1="244.4" x2="98" y2="244.4"/>
-              <line x1="302" y1="239.4" x2="378" y2="239.4"/><line x1="302" y1="244.4" x2="378" y2="244.4"/>
+              <line x1="22" y1="241.4" x2="98" y2="241.4"/><line x1="22" y1="246.4" x2="98" y2="246.4"/>
+              <line x1="302" y1="241.4" x2="378" y2="241.4"/><line x1="302" y1="246.4" x2="378" y2="246.4"/>
             </g>
           </g>
 
-          <!-- ===== ネジ(掘り込み + 頭) ===== -->
-          <g>
-            <circle cx="13" cy="13" r="7.5" fill="#131210"/>
-            <circle cx="13" cy="13" r="7.5" fill="none" stroke="#6E6A61" stroke-opacity="0.35" stroke-width="1"/>
-            <circle cx="13" cy="13" r="4.6" fill="url(#screwGrad)"/>
-            <rect x="8.9" y="12.3" width="8.2" height="1.4" fill="#7A1B05" opacity="0.8"/>
-            <circle cx="387" cy="13" r="7.5" fill="#131210"/>
-            <circle cx="387" cy="13" r="7.5" fill="none" stroke="#6E6A61" stroke-opacity="0.35" stroke-width="1"/>
-            <circle cx="387" cy="13" r="4.6" fill="url(#screwGrad)"/>
-            <rect x="382.9" y="12.3" width="8.2" height="1.4" fill="#7A1B05" opacity="0.8"/>
-            <circle cx="13" cy="239" r="7.5" fill="#131210"/>
-            <circle cx="13" cy="239" r="7.5" fill="none" stroke="#6E6A61" stroke-opacity="0.35" stroke-width="1"/>
-            <circle cx="13" cy="239" r="4.6" fill="url(#screwGrad)"/>
-            <rect x="8.9" y="238.3" width="8.2" height="1.4" fill="#7A1B05" opacity="0.8"/>
-            <circle cx="387" cy="239" r="7.5" fill="#131210"/>
-            <circle cx="387" cy="239" r="7.5" fill="none" stroke="#6E6A61" stroke-opacity="0.35" stroke-width="1"/>
-            <circle cx="387" cy="239" r="4.6" fill="url(#screwGrad)"/>
-            <rect x="382.9" y="238.3" width="8.2" height="1.4" fill="#7A1B05" opacity="0.8"/>
+          <!-- ===== ネジ(掘り込みに沈んだ十字ネジ) ===== -->
+          <g class="screw-g">
+            <circle cx="13" cy="13" r="7.5" fill="#121110"/>
+            <circle cx="13" cy="13" r="7.5" fill="none" stroke="#6E6A61" stroke-opacity="0.3" stroke-width="1"/>
+            <circle cx="13" cy="13" r="4.8" fill="url(#screwGrad)"/>
+            <g fill="#2A2823">
+              <rect x="8.5" y="12.3" width="9" height="1.5"/><rect x="12.25" y="8.5" width="1.5" height="9"/>
+            </g>
+            <circle cx="387" cy="13" r="7.5" fill="#121110"/>
+            <circle cx="387" cy="13" r="7.5" fill="none" stroke="#6E6A61" stroke-opacity="0.3" stroke-width="1"/>
+            <circle cx="387" cy="13" r="4.8" fill="url(#screwGrad)"/>
+            <g fill="#2A2823">
+              <rect x="382.5" y="12.3" width="9" height="1.5"/><rect x="386.25" y="8.5" width="1.5" height="9"/>
+            </g>
+            <circle cx="13" cy="239" r="7.5" fill="#121110"/>
+            <circle cx="13" cy="239" r="7.5" fill="none" stroke="#6E6A61" stroke-opacity="0.3" stroke-width="1"/>
+            <circle cx="13" cy="239" r="4.8" fill="url(#screwGrad)"/>
+            <g fill="#2A2823">
+              <rect x="8.5" y="238.3" width="9" height="1.5"/><rect x="12.25" y="234.5" width="1.5" height="9"/>
+            </g>
+            <circle cx="387" cy="239" r="7.5" fill="#121110"/>
+            <circle cx="387" cy="239" r="7.5" fill="none" stroke="#6E6A61" stroke-opacity="0.3" stroke-width="1"/>
+            <circle cx="387" cy="239" r="4.8" fill="url(#screwGrad)"/>
+            <g fill="#2A2823">
+              <rect x="382.5" y="238.3" width="9" height="1.5"/><rect x="386.25" y="234.5" width="1.5" height="9"/>
+            </g>
           </g>
 
           <!-- ===== 貼られた紙ラベル ===== -->
@@ -307,9 +374,14 @@
             <rect x="200.1" y="10" width="58.7" height="5" fill="#E2371F"/>
             <rect x="258.8" y="10" width="58.7" height="5" fill="#B32036"/>
             <rect x="317.5" y="10" width="58.5" height="5" fill="#7B1F42"/>
-            <!-- 紙の折り目・退色 -->
             <rect x="24" y="15" width="352" height="1" fill="#B7AF9E" opacity="0.5"/>
-            <rect x="24" y="96" width="352" height="14" fill="#C9C0AC" opacity="0.35"/>
+            <!-- 紙の繊維 -->
+            <rect x="24" y="10" width="352" height="100" filter="url(#grain)"
+                  opacity="0.075" style="mix-blend-mode:multiply"/>
+            <!-- 貼りの浮きと退色 -->
+            <rect x="24" y="96" width="352" height="14" fill="#C9C0AC" opacity="0.18"/>
+            <rect x="24" y="10" width="7" height="100" fill="#FFFFFF" opacity="0.35"/>
+            <rect x="369" y="10" width="7" height="100" fill="#B7AF9E" opacity="0.2"/>
           </g>
           <rect x="24.6" y="10.6" width="350.8" height="98.8" rx="2.6"
                 fill="none" stroke="#B7AF9E" stroke-width="1.2"/>
