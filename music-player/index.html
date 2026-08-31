@@ -25,6 +25,7 @@
     <div class="top-actions">
       <button id="addFilesBtn" class="btn primary" title="曲を追加する">＋ 曲を追加</button>
       <button id="openFolderBtn" class="btn" title="フォルダごと読み込む">フォルダ</button>
+      <button id="djBtn" class="btn" title="2デッキのDJミキサーを開く">DJ</button>
     </div>
     <!-- display:none にすると選択ダイアログが開かない環境があるため、見えないだけの状態にしておく -->
     <input type="file" id="folderInput" class="offscreen" webkitdirectory multiple>
@@ -461,6 +462,123 @@
       <button id="shotShareBtn" class="btn primary hidden">SNSでシェア</button>
       <button id="shotSaveBtn" class="btn">保存</button>
       <button id="shotCloseBtn" class="btn">閉じる</button>
+    </div>
+  </dialog>
+
+  <!-- DJミキサー(2デッキ + クロスフェーダー) -->
+  <div class="dj hidden" id="djScreen">
+    <div class="np-topbar dj-topbar">
+      <button id="djCloseBtn" class="icon-btn" title="閉じる">▼</button>
+      <span class="np-heading">DJ MIXER</span>
+      <button id="djRecBtn" class="icon-btn" title="ミックスを録音する">REC</button>
+    </div>
+
+    <div class="dj-body">
+      <div class="dj-slot" id="deckA"></div>
+
+      <section class="dj-mixer">
+        <div class="mix-meter" id="djMeter"><i></i></div>
+        <label class="fader"><span class="fader-name">CH A</span>
+          <input type="range" id="chA" min="0" max="100" value="100"></label>
+        <label class="fader"><span class="fader-name">CH B</span>
+          <input type="range" id="chB" min="0" max="100" value="100"></label>
+        <label class="fader"><span class="fader-name">MASTER</span>
+          <input type="range" id="masterVol" min="0" max="100" value="85"></label>
+        <div class="xf">
+          <span class="xf-end">A</span>
+          <input type="range" id="xfader" min="0" max="100" value="50" title="クロスフェーダー">
+          <span class="xf-end">B</span>
+          <button class="chip" id="xfCurve" title="つなぎ方のカーブ">SMOOTH</button>
+        </div>
+        <div class="automix">
+          <button class="toggle" id="autoMixBtn">AUTO MIX</button>
+          <span class="empty-note">終わりが近づいたデッキから、もう一方へ自動でつなぎます</span>
+        </div>
+      </section>
+
+      <div class="dj-slot" id="deckB"></div>
+    </div>
+  </div>
+
+  <!-- デッキ1枚ぶんの中身。A/B で同じものを使う -->
+  <template id="deckTemplate">
+    <section class="deck-panel">
+      <header class="deck-head">
+        <span class="deck-id">A</span>
+        <div class="deck-meta">
+          <div class="deck-title">曲が入っていません</div>
+          <div class="deck-sub">「曲を選ぶ」から読み込みます</div>
+        </div>
+        <button class="btn deck-load">曲を選ぶ</button>
+      </header>
+
+      <canvas class="deck-wave" width="1200" height="120"></canvas>
+
+      <div class="deck-bpm">
+        <span class="bpm-value">--.-</span><span class="bpm-unit">BPM</span>
+        <button class="chip bpm-half" title="BPMを半分にする">÷2</button>
+        <button class="chip bpm-double" title="BPMを2倍にする">×2</button>
+        <button class="chip bpm-tap" title="拍に合わせて叩くとBPMが決まる">TAP</button>
+        <span class="deck-time">0:00 / 0:00</span>
+      </div>
+
+      <div class="deck-transport">
+        <button class="key deck-cue" title="頭出し">
+          <span class="k-ico">◆</span><span class="k-label">CUE</span></button>
+        <button class="key play deck-play" title="再生 / 一時停止">
+          <span class="k-ico">▶</span><span class="k-label">PLAY</span></button>
+        <button class="key deck-sync" title="相手のデッキにテンポと拍を合わせる">
+          <span class="k-ico">⇄</span><span class="k-label">SYNC</span></button>
+        <button class="key deck-bend-back" title="押している間だけ遅らせる">
+          <span class="k-ico">◀</span><span class="k-label">BEND</span></button>
+        <button class="key deck-bend-fwd" title="押している間だけ速める">
+          <span class="k-ico">▶</span><span class="k-label">BEND</span></button>
+      </div>
+
+      <div class="deck-pads">
+        <span class="pad-label">HOT CUE</span>
+        <button class="pad hot" data-i="0">1</button>
+        <button class="pad hot" data-i="1">2</button>
+        <button class="pad hot" data-i="2">3</button>
+        <span class="pad-label">LOOP</span>
+        <button class="pad loop" data-beats="4">4</button>
+        <button class="pad loop" data-beats="8">8</button>
+        <button class="pad loop" data-beats="16">16</button>
+      </div>
+
+      <div class="deck-tempo">
+        <label class="fader"><span class="fader-name">TEMPO</span>
+          <input type="range" class="tempo" min="-16" max="16" step="0.05" value="0"></label>
+        <span class="tempo-val">+0.0%</span>
+        <button class="chip keylock" title="音程を変えずに速さだけ変える">KEY LOCK</button>
+      </div>
+
+      <div class="deck-eq">
+        <label class="knob"><input type="range" class="eq-hi" min="-100" max="100" step="1" value="0"><span>HI</span></label>
+        <label class="knob"><input type="range" class="eq-mid" min="-100" max="100" step="1" value="0"><span>MID</span></label>
+        <label class="knob"><input type="range" class="eq-low" min="-100" max="100" step="1" value="0"><span>LOW</span></label>
+        <label class="knob"><input type="range" class="filter" min="-100" max="100" step="1" value="0"><span>FILTER</span></label>
+      </div>
+    </section>
+  </template>
+
+  <dialog id="djPickDialog" class="pl-dialog dj-pick">
+    <h3>デッキ <span id="djPickDeck">A</span> に読み込む曲</h3>
+    <input type="search" id="djPickSearch" class="dj-search"
+           placeholder="曲名 / アーティスト / アルバムで絞り込む">
+    <div id="djPickList" class="dj-pick-list"></div>
+    <div class="pl-dialog-actions">
+      <button id="djPickCancel" class="btn">閉じる</button>
+    </div>
+  </dialog>
+
+  <dialog id="djMixDialog" class="pl-dialog">
+    <h3>録音したミックス</h3>
+    <audio id="djMixAudio" class="dj-mix-audio" controls></audio>
+    <p class="empty-note">サイズ: <span id="djMixSize">-</span></p>
+    <div class="pl-dialog-actions">
+      <button id="djMixSaveBtn" class="btn primary">保存</button>
+      <button id="djMixCloseBtn" class="btn">閉じる</button>
     </div>
   </dialog>
 

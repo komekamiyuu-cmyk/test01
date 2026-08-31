@@ -1,6 +1,6 @@
 // オフラインでも起動できるようにアプリ本体をキャッシュする Service Worker
 // 配信内容を更新したらこの版数を上げる(古いキャッシュは activate 時に破棄される)
-const CACHE = 'cassette-v9';
+const CACHE = 'cassette-v10';
 const ASSETS = [
   './',
   './index.html',
@@ -12,6 +12,8 @@ const ASSETS = [
   './js/demo.js',
   './js/folderstore.js',
   './js/share.js',
+  './js/dj.js',
+  './js/analyze.js',
   './manifest.json',
   './icons/icon-192.png',
   './icons/icon-512.png',

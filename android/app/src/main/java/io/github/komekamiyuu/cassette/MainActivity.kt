@@ -309,13 +309,26 @@ class MainActivity : AppCompatActivity() {
          */
         @JavascriptInterface
         fun shareImage(dataUrl: String, text: String) {
+            shareFile(dataUrl, "image/png", "now-playing.png", text)
+        }
+
+        /**
+         * data URL で渡されたものを一時ファイルに落として、他アプリへ渡す。
+         * DJミキサーで録音したミックスの保存もここを通る。
+         */
+        @JavascriptInterface
+        fun shareFile(dataUrl: String, mime: String, fileName: String, text: String) {
             try {
                 val base64 = dataUrl.substringAfter(",", "")
                 if (base64.isEmpty()) return
                 val bytes = Base64.decode(base64, Base64.DEFAULT)
 
+                // 外から来た名前をそのままパスに使わない(ディレクトリを抜けられないようにする)
+                val safeName = File(fileName).name.replace(Regex("[^A-Za-z0-9._-]"), "_")
+                    .ifEmpty { "share.bin" }
+
                 val dir = File(cacheDir, "share").apply { mkdirs() }
-                val file = File(dir, "now-playing.png")
+                val file = File(dir, safeName)
                 file.writeBytes(bytes)
 
                 val uri = FileProvider.getUriForFile(
@@ -324,16 +337,16 @@ class MainActivity : AppCompatActivity() {
                     file,
                 )
                 val send = Intent(Intent.ACTION_SEND).apply {
-                    type = "image/png"
+                    type = mime.ifEmpty { "application/octet-stream" }
                     putExtra(Intent.EXTRA_STREAM, uri)
                     putExtra(Intent.EXTRA_TEXT, text)
                     addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                 }
-                runOnUiThread { startActivity(Intent.createChooser(send, "シェア")) }
+                runOnUiThread { startActivity(Intent.createChooser(send, "共有")) }
             } catch (e: Exception) {
                 runOnUiThread {
                     webView.evaluateJavascript(
-                        "window.__toast && window.__toast('画像を共有できませんでした')",
+                        "window.__toast && window.__toast('共有できませんでした')",
                         null,
                     )
                 }

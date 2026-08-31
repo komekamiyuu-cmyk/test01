@@ -804,6 +804,36 @@ $('demoBtn').onclick = async () => {
   }
 };
 
+// ---------- DJミキサー ----------
+// 2曲を同時に鳴らす画面なので、通常再生とは別の仕組み(Web Audio)で動く。
+// 読み込みが要るのは開いたときだけなので、その場で取り込む。
+
+let dj = null;
+
+async function openDJScreen() {
+  const btn = $('djBtn');
+  btn.disabled = true;
+  try {
+    dj ??= await import('./dj.js');
+    // 通常再生と重ならないよう、DJ画面を開くときに止める
+    await dj.openDJ({
+      getTracks: () => state.tracks,
+      audioContext: (ensureAnalyser(), audioCtx) || undefined,
+      toast,
+      onOpen: () => {
+        if (nativePlayer) nativePlayer.pause();
+        else audio.pause();
+      },
+    });
+  } catch (e) {
+    toast('DJミキサーを開けませんでした');
+  } finally {
+    btn.disabled = false;
+  }
+}
+
+$('djBtn').onclick = openDJScreen;
+
 $('addFilesBtn').onclick = pickFiles;
 $('openFolderBtn').onclick = openFolder;
 $('emptyOpenBtn').onclick = openFolder;
@@ -860,6 +890,8 @@ $('plCancelBtn').onclick = () => $('plDialog').close();
 $('shotCloseBtn').onclick = () => $('shotDialog').close();
 
 document.addEventListener('keydown', (e) => {
+  // DJ画面を開いている間は、こちらの再生には触らない
+  if (dj?.isDJOpen()) return;
   if (e.code === 'Space' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'BUTTON') {
     e.preventDefault();
     togglePlay();
@@ -901,6 +933,7 @@ window.__onLibraryReady = (granted) => {
 
 // 戻るキー: 再生中画面が開いていれば閉じ、開いていなければアプリを終了させる
 window.__androidBack = () => {
+  if (dj?.closeDJ()) return true;
   const np = $('nowPlaying');
   if (!np.classList.contains('hidden')) {
     np.classList.add('hidden');
