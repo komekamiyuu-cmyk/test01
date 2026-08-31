@@ -1,0 +1,94 @@
+/* ============================================================
+   テーマ定義 — 見た目を変えたいときは、このファイルだけを編集する
+   ============================================================
+
+   ここで定義した値は、画面のCSSからも、カセットを描いているJavaScript
+   (js/share.js のシェア画像)からも参照される。色を1箇所変えれば、
+   一覧・再生画面・SNS用画像のすべてに反映される。
+
+   ・色を変える      → 下の :root の値を書き換える
+   ・書体を変える    → --fd / --fu / --fb を書き換える
+     (fonts.css に埋め込んである書体を差し替える場合は README を参照)
+   ・暗い配色を変える → 「暗い配色」の3ブロックを同じ値で書き換える
+     (メディアクエリ用と、手動切り替え用の2系統があるため3箇所ある)
+   ============================================================ */
+
+:root {
+  /* --- 地とインク(暖色寄りのニュートラル) --- */
+  --paper:    #E8E2D5;   /* 画面全体の地 */
+  --paper-2:  #F2EDE3;   /* カード・ミニプレーヤーなど一段明るい面 */
+  --paper-3:  #DCD5C6;   /* 押した時・ジャケット無しの面 */
+  --ink:      #33322E;   /* 文字と罫線の主色 */
+  --ink-2:    #5C5A54;   /* 補助的な文字 */
+  --ink-3:    #8A867C;   /* さらに弱い文字 */
+  --hairline: #C6BFAF;   /* 一覧の区切り線 */
+
+  /* --- アクセント(1色だけ強く使う) --- */
+  --flame:    #EE3B12;   /* 差し色。ボタン・選択中・カセットのブロック */
+  --flame-in: #FFFFFF;   /* アクセントの上に乗る文字色 */
+
+  /* --- ストライプ帯(黄 → 橙 → 赤 → 赤紫) ---
+     ヘッダー下の帯と、VUメーターの段階色に共通で使う */
+  --s1: #F5B415;
+  --s2: #F0930E;
+  --s3: #F07C10;
+  --s4: #E2371F;
+  --s5: #B32036;
+  --s6: #7B1F42;
+
+  /* --- デッキ(カセットを載せる機械の面) ---
+     カセット本体そのものの色は index.html のSVGと js/share.js の中にある。
+     実物の成形色・巻かれたテープ・金属ハブなので、配色を切り替えても変わらない。 */
+  --shell:   #3A3936;   /* デッキの黒い面 */
+  --shadow:  rgba(51, 50, 46, 0.9);
+
+  /* --- 書体 --- */
+  --fd: 'Archivo Black', 'Arial Black', 'Hiragino Sans', sans-serif;  /* 見出し */
+  --fu: 'Oswald', 'Arial Narrow', 'Hiragino Sans', sans-serif;        /* ラベル・数値 */
+  --fb: 'Hiragino Sans', 'Yu Gothic UI', 'Noto Sans JP', system-ui, sans-serif; /* 本文 */
+  --fm: ui-monospace, 'SFMono-Regular', 'Courier New', monospace;     /* カウンター */
+}
+
+/* --- 暗い配色 ---
+   カセット本体は実物と同じく色を変えない。周囲のUIだけが反転する。 */
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper:    #1B1A18;
+    --paper-2:  #242220;
+    --paper-3:  #2E2C29;
+    --ink:      #E8E2D5;
+    --ink-2:    #B0A99B;
+    --ink-3:    #837D72;
+    --hairline: #423F3A;
+    --flame:    #FF522A;
+    --flame-in: #16150F;
+    --shadow:   rgba(0, 0, 0, 0.85);
+  }
+}
+
+:root[data-theme="dark"] {
+  --paper:    #1B1A18;
+  --paper-2:  #242220;
+  --paper-3:  #2E2C29;
+  --ink:      #E8E2D5;
+  --ink-2:    #B0A99B;
+  --ink-3:    #837D72;
+  --hairline: #423F3A;
+  --flame:    #FF522A;
+  --flame-in: #16150F;
+  --shadow:   rgba(0, 0, 0, 0.85);
+}
+
+:root[data-theme="light"] {
+  --paper:    #E8E2D5;
+  --paper-2:  #F2EDE3;
+  --paper-3:  #DCD5C6;
+  --ink:      #33322E;
+  --ink-2:    #5C5A54;
+  --ink-3:    #8A867C;
+  --hairline: #C6BFAF;
+  --flame:    #EE3B12;
+  --flame-in: #FFFFFF;
+  --shadow:   rgba(51, 50, 46, 0.9);
+}

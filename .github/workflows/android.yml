@@ -1,0 +1,84 @@
+# Android の APK をビルドして、成果物としてダウンロードできるようにする。
+# GitHub のランナーには Android SDK が入っているので、手元に SDK が無くても APK が作れる。
+name: Build Android APK
+
+on:
+  push:
+    paths:
+      - 'android/**'
+      - 'music-player/**'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Gradle のキャッシュ
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: gradle-${{ hashFiles('android/**/*.gradle.kts', 'android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: gradle-
+
+      - name: APK をビルド
+        working-directory: android
+        run: ./gradlew assembleDebug --no-daemon --stacktrace
+
+      # インストールする前に中身を確かめられるようにする。
+      # ここの出力を読めば、権限・サービス・同梱物・署名が期待通りか分かる。
+      - name: APK の中身を検証
+        working-directory: android
+        run: |
+          set -e
+          APK=app/build/outputs/apk/debug/app-debug.apk
+          BT=$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -1)
+          echo "::group::基本情報"
+          "$BT/aapt" dump badging "$APK" | grep -E "^(package|application-label|sdkVersion|targetSdkVersion|launchable-activity)" || true
+          echo "APKサイズ: $(du -h "$APK" | cut -f1)"
+          echo "::endgroup::"
+
+          echo "::group::要求している権限"
+          "$BT/aapt" dump permissions "$APK"
+          echo "::endgroup::"
+
+          echo "::group::通信系の権限が入っていないことの確認"
+          # ライブラリの取り込みで通信系の権限が紛れ込んでいないか見張る
+          for P in android.permission.INTERNET android.permission.ACCESS_NETWORK_STATE; do
+            if "$BT/aapt" dump permissions "$APK" | grep -q "$P"; then
+              echo "NG: $P が入っている"; exit 1
+            fi
+            echo "OK: $P なし"
+          done
+          echo "::endgroup::"
+
+          echo "::group::再生サービスの登録"
+          "$BT/aapt" dump xmltree "$APK" AndroidManifest.xml \
+            | grep -A3 -E "E: (service|provider)" | head -40
+          echo "::endgroup::"
+
+          echo "::group::同梱された画面ファイル"
+          unzip -l "$APK" | grep "assets/web" || (echo "NG: 画面が同梱されていない"; exit 1)
+          echo "::endgroup::"
+
+          echo "::group::署名"
+          "$BT/apksigner" verify --print-certs "$APK" | head -8
+          echo "::endgroup::"
+
+      - name: APK をアップロード
+        uses: actions/upload-artifact@v4
+        with:
+          name: cassette-player-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error

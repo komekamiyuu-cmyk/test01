@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#E8E2D5" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#1B1A18" media="(prefers-color-scheme: dark)">
+  <meta name="description" content="カセットプレーヤー - ローカルの音楽フォルダを再生するレトロなミュージックプレーヤー">
+  <title>カセットプレーヤー</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📼</text></svg>">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="fonts.css">
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">▶</span>
+      <span class="brand-name">CASSETTE</span>
+      <span class="brand-sub">AUDIO PLAYER / TYPE-Ⅰ</span>
+    </div>
+    <div class="top-actions">
+      <button id="addFilesBtn" class="btn primary" title="曲を追加する">＋ 曲を追加</button>
+      <button id="openFolderBtn" class="btn" title="フォルダごと読み込む">フォルダ</button>
+      <button id="djBtn" class="btn" title="2デッキのDJミキサーを開く">DJ</button>
+    </div>
+    <!-- display:none にすると選択ダイアログが開かない環境があるため、見えないだけの状態にしておく -->
+    <input type="file" id="folderInput" class="offscreen" webkitdirectory multiple>
+    <input type="file" id="filesInput" class="offscreen"
+           accept="audio/*,.mp3,.m4a,.aac,.ogg,.oga,.opus,.wav,.flac,.m4b" multiple>
+  </header>
+
+  <div class="stripe-band" aria-hidden="true">
+    <i style="--c:#F5B415"></i><i style="--c:#F0930E"></i><i style="--c:#F07C10"></i>
+    <i style="--c:#E2371F"></i><i style="--c:#B32036"></i><i style="--c:#7B1F42"></i>
+  </div>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="albums">アルバム</button>
+    <button class="tab" data-tab="tracks">曲</button>
+    <button class="tab" data-tab="favorites">お気に入り</button>
+    <button class="tab" data-tab="playlists">プレイリスト</button>
+    <button class="tab" data-tab="genres">ジャンル</button>
+  </nav>
+
+  <main id="content" class="content">
+    <div class="empty-state" id="emptyState">
+      <div class="empty-rule"></div>
+      <p class="empty-kicker">NO TAPE LOADED</p>
+      <h2 class="empty-title">音楽フォルダを<br>読み込んでください</h2>
+      <div class="empty-actions">
+        <button id="reopenBtn" class="btn primary big hidden">前回のフォルダを開く</button>
+        <button id="emptyFilesBtn" class="btn primary big">曲ファイルを選ぶ</button>
+        <button id="emptyOpenBtn" class="btn big">フォルダを選ぶ</button>
+      </div>
+      <div class="empty-demo">
+        <button id="demoBtn" class="btn big">▶ デモ曲で試す</button>
+        <p class="empty-note">手持ちの曲がなくても、その場で作った4曲で全機能を試せます</p>
+      </div>
+      <p class="empty-note">MP3 / M4A / AAC / OGG / WAV / FLAC &nbsp;·&nbsp; ファイルは端末内で処理されます</p>
+      <p class="empty-note android-only">端末の音楽が表示されない場合は、設定 → アプリ → カセット → 権限 から
+        「音楽とオーディオ」を許可してください</p>
+    </div>
+    <div id="viewRoot"></div>
+  </main>
+
+  <!-- ミニプレーヤー(画面下部) -->
+  <div class="mini-player hidden" id="miniPlayer">
+    <div class="mini-art" id="miniArt">♪</div>
+    <div class="mini-info" id="miniInfo">
+      <div class="mini-title" id="miniTitle">-</div>
+      <div class="mini-artist" id="miniArtist">-</div>
+    </div>
+    <button id="miniPrevBtn" class="icon-btn" title="前の曲">◀◀</button>
+    <button id="miniPlayBtn" class="icon-btn play" title="再生 / 一時停止">▶</button>
+    <button id="miniNextBtn" class="icon-btn" title="次の曲">▶▶</button>
+  </div>
+
+  <!-- 再生中画面 -->
+  <div class="now-playing hidden" id="nowPlaying">
+    <div class="np-topbar">
+      <button id="npCloseBtn" class="icon-btn" title="閉じる">▼</button>
+      <span class="np-heading">NOW PLAYING</span>
+      <button id="shotBtn" class="icon-btn" title="スクショをSNSにシェア">SHARE</button>
+    </div>
+
+    <div class="deck">
+      <div class="deck-meters">
+        <div class="vu"><span class="vu-label">L</span><div class="vu-bar" id="vuL"></div></div>
+        <div class="vu"><span class="vu-label">R</span><div class="vu-bar" id="vuR"></div></div>
+        <div class="counter-box">
+          <span class="counter" id="tapeCounter">000</span>
+          <span class="counter-label">COUNTER</span>
+        </div>
+      </div>
+
+      <div class="cassette-wrap" id="cassette">
+        <svg class="cassette-svg" viewBox="0 0 400 252" aria-hidden="true">
+          <defs>
+            <!-- 成形プラスチックの厚み(上が明るく、下へ落ちる) -->
+            <linearGradient id="shellGrad" x1="0" y1="0" x2="0.15" y2="1">
+              <stop offset="0" stop-color="#5E5A4F"/>
+              <stop offset="0.04" stop-color="#413E37"/>
+              <stop offset="0.30" stop-color="#3B382F"/>
+              <stop offset="0.72" stop-color="#312E28"/>
+              <stop offset="0.94" stop-color="#26241F"/>
+              <stop offset="1" stop-color="#13120E"/>
+            </linearGradient>
+            <!-- 斜めの映り込み -->
+            <linearGradient id="shellSheen" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.12"/>
+              <stop offset="0.30" stop-color="#FFFFFF" stop-opacity="0.02"/>
+              <stop offset="0.52" stop-color="#FFFFFF" stop-opacity="0.07"/>
+              <stop offset="0.66" stop-color="#FFFFFF" stop-opacity="0.01"/>
+              <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+            </linearGradient>
+            <!-- 紙ラベル(わずかに焼けた質感) -->
+            <linearGradient id="paperGrad" x1="0" y1="0" x2="0.35" y2="1">
+              <stop offset="0" stop-color="#F8F3EA"/>
+              <stop offset="0.5" stop-color="#EAE4D8"/>
+              <stop offset="1" stop-color="#D7CFBE"/>
+            </linearGradient>
+            <!-- 窓の面取り(左上が光り、右下が落ちる) -->
+            <linearGradient id="chamfer" x1="0.1" y1="0" x2="0.7" y2="1">
+              <stop offset="0" stop-color="#948E81"/>
+              <stop offset="0.42" stop-color="#3C3931"/>
+              <stop offset="1" stop-color="#100F0C"/>
+            </linearGradient>
+            <!-- 窓のアクリルに乗る光 -->
+            <linearGradient id="glassGrad" x1="0" y1="0" x2="0.85" y2="1">
+              <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.13"/>
+              <stop offset="0.10" stop-color="#FFFFFF" stop-opacity="0.02"/>
+              <stop offset="0.455" stop-color="#FFFFFF" stop-opacity="0.012"/>
+              <stop offset="0.485" stop-color="#FFFFFF" stop-opacity="0.085"/>
+              <stop offset="0.515" stop-color="#FFFFFF" stop-opacity="0.012"/>
+              <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.006"/>
+            </linearGradient>
+            <!--
+              巻かれたテープ。半径に対する比率で色が決まる(objectBoundingBox)ので、
+              JSで r を変えるだけで巻き層の縞がそのまま伸び縮みする。
+            -->
+            <radialGradient id="packGrad">
+              <stop offset="0" stop-color="#141209"/>
+              <stop offset="0.40" stop-color="#221E17"/>
+              <stop offset="0.425" stop-color="#4A4030"/>
+              <stop offset="0.45" stop-color="#221E17"/>
+              <stop offset="0.585" stop-color="#29241C"/>
+              <stop offset="0.605" stop-color="#574836"/>
+              <stop offset="0.625" stop-color="#29241C"/>
+              <stop offset="0.765" stop-color="#2E281F"/>
+              <stop offset="0.785" stop-color="#5E4D39"/>
+              <stop offset="0.805" stop-color="#2E281F"/>
+              <stop offset="0.93" stop-color="#332C22"/>
+              <stop offset="0.955" stop-color="#6A573B"/>
+              <stop offset="0.975" stop-color="#241F19"/>
+              <stop offset="0.995" stop-color="#4A3E2D"/>
+              <stop offset="1" stop-color="#0B0A08"/>
+            </radialGradient>
+            <!-- 巻いたテープの上に乗る照り(半径と一緒に動く) -->
+            <radialGradient id="packSheen" cx="0.34" cy="0.26" r="0.62">
+              <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.11"/>
+              <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0.035"/>
+              <stop offset="1" stop-color="#FFFFFF" stop-opacity="0"/>
+            </radialGradient>
+            <radialGradient id="hubGrad" cx="0.36" cy="0.3" r="0.85">
+              <stop offset="0" stop-color="#DED9CC"/>
+              <stop offset="0.45" stop-color="#A6A296"/>
+              <stop offset="1" stop-color="#63605A"/>
+            </radialGradient>
+            <radialGradient id="rollerGrad" cx="0.35" cy="0.3" r="0.85">
+              <stop offset="0" stop-color="#C6C0B2"/>
+              <stop offset="0.55" stop-color="#7E7A71"/>
+              <stop offset="1" stop-color="#3A3832"/>
+            </radialGradient>
+            <radialGradient id="screwGrad" cx="0.34" cy="0.28" r="0.9">
+              <stop offset="0" stop-color="#CFC9BB"/>
+              <stop offset="0.45" stop-color="#8B877D"/>
+              <stop offset="1" stop-color="#3B3832"/>
+            </radialGradient>
+
+            <clipPath id="winClip"><rect x="56" y="114" width="288" height="96" rx="15"/></clipPath>
+            <clipPath id="labelClip"><rect x="24" y="10" width="352" height="100" rx="3"/></clipPath>
+
+            <!-- 表面のざらつき。これが無いと、どれだけ陰影を足しても図に見える -->
+            <filter id="grain" x="0" y="0" width="100%" height="100%">
+              <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3" stitchTiles="stitch"/>
+              <feColorMatrix type="saturate" values="0"/>
+            </filter>
+            <filter id="soft" x="-30%" y="-30%" width="160%" height="160%">
+              <feGaussianBlur stdDeviation="3.2"/>
+            </filter>
+            <filter id="labelShadow" x="-8%" y="-16%" width="120%" height="155%">
+              <feDropShadow dx="0" dy="1.2" stdDeviation="0.9" flood-color="#000000" flood-opacity="0.55"/>
+              <feDropShadow dx="0" dy="3" stdDeviation="3.4" flood-color="#000000" flood-opacity="0.4"/>
+            </filter>
+          </defs>
+
+          <!-- ===== シェル(成形プラスチック) ===== -->
+          <rect x="0" y="0" width="400" height="252" rx="9" fill="url(#shellGrad)"/>
+          <rect x="0" y="0" width="400" height="252" rx="9" fill="url(#shellSheen)"/>
+          <!-- 上面に落ちる光 -->
+          <ellipse cx="196" cy="3" rx="150" ry="9" fill="#FFFFFF" opacity="0.10" filter="url(#soft)"/>
+          <!-- 成形のざらつき -->
+          <rect x="0" y="0" width="400" height="252" rx="9" filter="url(#grain)"
+                opacity="0.08" style="mix-blend-mode:overlay"/>
+          <!-- 上下ハーフの合わせ目 -->
+          <rect x="5" y="5" width="390" height="242" rx="5.5"
+                fill="none" stroke="#100F0C" stroke-opacity="0.75" stroke-width="1"/>
+          <rect x="5" y="6.2" width="390" height="242" rx="5.5"
+                fill="none" stroke="#FFFFFF" stroke-opacity="0.07" stroke-width="1"/>
+          <rect x="0.8" y="0.8" width="398.4" height="250.4" rx="8.6"
+                fill="none" stroke="#121110" stroke-width="1.6"/>
+
+          <!-- 誤消去防止ツメの窪み(上端) -->
+          <g>
+            <rect x="40" y="0" width="26" height="8" rx="1.5" fill="#131210"/>
+            <rect x="40" y="7" width="26" height="1.4" fill="#6B675E" opacity="0.5"/>
+            <rect x="334" y="0" width="26" height="8" rx="1.5" fill="#131210"/>
+            <rect x="334" y="7" width="26" height="1.4" fill="#6B675E" opacity="0.5"/>
+          </g>
+
+          <!-- ===== テープ窓 ===== -->
+          <!-- 掘り込みの落ち影 -->
+          <rect x="54" y="112" width="292" height="100" rx="17" fill="#0F0E0C"
+                opacity="0.7" filter="url(#soft)"/>
+          <!-- 面取り -->
+          <rect x="54.5" y="112.5" width="291" height="99" rx="16.5"
+                fill="none" stroke="url(#chamfer)" stroke-width="3"/>
+          <rect x="56" y="114" width="288" height="96" rx="15" fill="#0C0B09"/>
+
+          <g clip-path="url(#winClip)">
+            <!-- 窓の奥(ハーフの内壁) -->
+            <rect x="56" y="114" width="288" height="96" fill="#1A1714"/>
+            <ellipse cx="150" cy="122" rx="76" ry="8" fill="#FFFFFF" opacity="0.035"/>
+
+            <!-- テープの経路:巻きから下のガイドへ降り、前面を横切る -->
+            <g stroke="#2E2418" stroke-width="3.6" fill="none">
+              <line x1="78" y1="199" x2="128" y2="156"/>
+              <line x1="322" y1="199" x2="272" y2="156"/>
+            </g>
+
+            <!-- 巻かれたテープ(半径が再生位置で変わる) -->
+            <circle id="spoolL" cx="128" cy="156" r="36" fill="url(#packGrad)"
+                    stroke="#0A0907" stroke-width="1.1"/>
+            <circle id="spoolLGloss" cx="128" cy="156" r="36" fill="url(#packSheen)"/>
+            <circle id="spoolR" cx="272" cy="156" r="20" fill="url(#packGrad)"
+                    stroke="#0A0907" stroke-width="1.1"/>
+            <circle id="spoolRGloss" cx="272" cy="156" r="20" fill="url(#packSheen)"/>
+
+            <!-- 前面を横切るテープとガイドローラー -->
+            <line x1="78" y1="199" x2="322" y2="199" stroke="#2E2418" stroke-width="3.6"/>
+            <line x1="78" y1="197.6" x2="322" y2="197.6" stroke="#6E5A3C" stroke-width="0.9" opacity="0.55"/>
+            <g>
+              <circle cx="78" cy="199" r="5" fill="url(#rollerGrad)"/>
+              <circle cx="78" cy="199" r="1.9" fill="#141310"/>
+              <circle cx="322" cy="199" r="5" fill="url(#rollerGrad)"/>
+              <circle cx="322" cy="199" r="1.9" fill="#141310"/>
+            </g>
+
+            <!-- 掘り込みの内側に回り込む影 -->
+            <rect x="56" y="114" width="288" height="96" rx="15" fill="none"
+                  stroke="#000000" stroke-width="11" opacity="0.5" filter="url(#soft)"/>
+          </g>
+
+          <!-- ハブ(回転する) -->
+          <g id="hubL" class="hub-g">
+            <circle cx="128" cy="156" r="19" fill="url(#hubGrad)"/>
+            <circle cx="128" cy="156" r="19" fill="none" stroke="#4A473F" stroke-width="1"/>
+            <circle cx="128" cy="156" r="9.5" fill="#121110"/>
+            <g fill="#121110">
+              <rect x="126.4" y="141.5" width="3.2" height="6" transform="rotate(0 128 156)"/>
+              <rect x="126.4" y="141.5" width="3.2" height="6" transform="rotate(60 128 156)"/>
+              <rect x="126.4" y="141.5" width="3.2" height="6" transform="rotate(120 128 156)"/>
+              <rect x="126.4" y="141.5" width="3.2" height="6" transform="rotate(180 128 156)"/>
+              <rect x="126.4" y="141.5" width="3.2" height="6" transform="rotate(240 128 156)"/>
+              <rect x="126.4" y="141.5" width="3.2" height="6" transform="rotate(300 128 156)"/>
+            </g>
+          </g>
+          <g id="hubR" class="hub-g">
+            <circle cx="272" cy="156" r="19" fill="url(#hubGrad)"/>
+            <circle cx="272" cy="156" r="19" fill="none" stroke="#4A473F" stroke-width="1"/>
+            <circle cx="272" cy="156" r="9.5" fill="#121110"/>
+            <g fill="#121110">
+              <rect x="270.4" y="141.5" width="3.2" height="6" transform="rotate(0 272 156)"/>
+              <rect x="270.4" y="141.5" width="3.2" height="6" transform="rotate(60 272 156)"/>
+              <rect x="270.4" y="141.5" width="3.2" height="6" transform="rotate(120 272 156)"/>
+              <rect x="270.4" y="141.5" width="3.2" height="6" transform="rotate(180 272 156)"/>
+              <rect x="270.4" y="141.5" width="3.2" height="6" transform="rotate(240 272 156)"/>
+              <rect x="270.4" y="141.5" width="3.2" height="6" transform="rotate(300 272 156)"/>
+            </g>
+          </g>
+
+          <!-- 窓のアクリル(映り込み)と縁 -->
+          <rect x="56" y="114" width="288" height="96" rx="15" fill="url(#glassGrad)" pointer-events="none"/>
+          <rect x="56.7" y="114.7" width="286.6" height="94.6" rx="14.3"
+                fill="none" stroke="#0A0908" stroke-width="1.4"/>
+
+          <!-- ===== 下端(ヘッド開口部) ===== -->
+          <path d="M104 252 L104 220 Q104 214 110 214 L290 214 Q296 214 296 220 L296 252 Z" fill="#242220"/>
+          <path d="M104 252 L104 220 Q104 214 110 214 L290 214 Q296 214 296 220"
+                fill="none" stroke="#131210" stroke-width="1.4"/>
+          <path d="M104 252 L104 220 Q104 214 110 214 L290 214 Q296 214 296 220"
+                fill="none" stroke="#FFFFFF" stroke-opacity="0.06" stroke-width="1" transform="translate(0 1.4)"/>
+          <g fill="#0C0B09">
+            <rect x="172" y="220" width="56" height="32" rx="1.5"/>
+            <rect x="150" y="220" width="13" height="32" rx="1.5"/>
+            <rect x="237" y="220" width="13" height="32" rx="1.5"/>
+            <circle cx="132" cy="236" r="8.5"/>
+            <circle cx="268" cy="236" r="8.5"/>
+            <circle cx="114" cy="242" r="3.5"/>
+            <circle cx="286" cy="242" r="3.5"/>
+          </g>
+          <!-- ヘッドに当たるパッド -->
+          <rect x="186" y="226" width="28" height="9" rx="1" fill="#54504A"/>
+          <rect x="186" y="226" width="28" height="2.5" fill="#7A7469" opacity="0.7"/>
+
+          <!-- ===== シェルの刻印とリブ ===== -->
+          <g font-family="Oswald, sans-serif" font-size="6.5" letter-spacing="1">
+            <text x="22" y="233" fill="#121110">COMPACT CASSETTE</text>
+            <text x="22" y="232" fill="#6E6A61">COMPACT CASSETTE</text>
+            <text x="378" y="233" text-anchor="end" fill="#121110">TYPE I  NORMAL</text>
+            <text x="378" y="232" text-anchor="end" fill="#6E6A61">TYPE I  NORMAL</text>
+          </g>
+          <g stroke-width="1.2">
+            <g stroke="#131210">
+              <line x1="22" y1="240" x2="98" y2="240"/><line x1="22" y1="245" x2="98" y2="245"/>
+              <line x1="302" y1="240" x2="378" y2="240"/><line x1="302" y1="245" x2="378" y2="245"/>
+            </g>
+            <g stroke="#6E6A61" stroke-opacity="0.4">
+              <line x1="22" y1="241.4" x2="98" y2="241.4"/><line x1="22" y1="246.4" x2="98" y2="246.4"/>
+              <line x1="302" y1="241.4" x2="378" y2="241.4"/><line x1="302" y1="246.4" x2="378" y2="246.4"/>
+            </g>
+          </g>
+
+          <!-- ===== ネジ(掘り込みに沈んだ十字ネジ) ===== -->
+          <g class="screw-g">
+            <circle cx="13" cy="13" r="7.5" fill="#121110"/>
+            <circle cx="13" cy="13" r="7.5" fill="none" stroke="#6E6A61" stroke-opacity="0.3" stroke-width="1"/>
+            <circle cx="13" cy="13" r="4.8" fill="url(#screwGrad)"/>
+            <g fill="#2A2823">
+              <rect x="8.5" y="12.3" width="9" height="1.5"/><rect x="12.25" y="8.5" width="1.5" height="9"/>
+            </g>
+            <circle cx="387" cy="13" r="7.5" fill="#121110"/>
+            <circle cx="387" cy="13" r="7.5" fill="none" stroke="#6E6A61" stroke-opacity="0.3" stroke-width="1"/>
+            <circle cx="387" cy="13" r="4.8" fill="url(#screwGrad)"/>
+            <g fill="#2A2823">
+              <rect x="382.5" y="12.3" width="9" height="1.5"/><rect x="386.25" y="8.5" width="1.5" height="9"/>
+            </g>
+            <circle cx="13" cy="239" r="7.5" fill="#121110"/>
+            <circle cx="13" cy="239" r="7.5" fill="none" stroke="#6E6A61" stroke-opacity="0.3" stroke-width="1"/>
+            <circle cx="13" cy="239" r="4.8" fill="url(#screwGrad)"/>
+            <g fill="#2A2823">
+              <rect x="8.5" y="238.3" width="9" height="1.5"/><rect x="12.25" y="234.5" width="1.5" height="9"/>
+            </g>
+            <circle cx="387" cy="239" r="7.5" fill="#121110"/>
+            <circle cx="387" cy="239" r="7.5" fill="none" stroke="#6E6A61" stroke-opacity="0.3" stroke-width="1"/>
+            <circle cx="387" cy="239" r="4.8" fill="url(#screwGrad)"/>
+            <g fill="#2A2823">
+              <rect x="382.5" y="238.3" width="9" height="1.5"/><rect x="386.25" y="234.5" width="1.5" height="9"/>
+            </g>
+          </g>
+
+          <!-- ===== 貼られた紙ラベル ===== -->
+          <g filter="url(#labelShadow)">
+            <rect x="24" y="10" width="352" height="100" rx="3" fill="url(#paperGrad)"/>
+          </g>
+          <g clip-path="url(#labelClip)">
+            <!-- 上端のストライプ帯(ヘッダー・VUメーターと共通の意匠) -->
+            <rect x="24" y="10" width="58.7" height="5" fill="#F5B415"/>
+            <rect x="82.7" y="10" width="58.7" height="5" fill="#F0930E"/>
+            <rect x="141.4" y="10" width="58.7" height="5" fill="#F07C10"/>
+            <rect x="200.1" y="10" width="58.7" height="5" fill="#E2371F"/>
+            <rect x="258.8" y="10" width="58.7" height="5" fill="#B32036"/>
+            <rect x="317.5" y="10" width="58.5" height="5" fill="#7B1F42"/>
+            <rect x="24" y="15" width="352" height="1" fill="#B7AF9E" opacity="0.5"/>
+            <!-- 紙の繊維 -->
+            <rect x="24" y="10" width="352" height="100" filter="url(#grain)"
+                  opacity="0.075" style="mix-blend-mode:multiply"/>
+            <!-- 貼りの浮きと退色 -->
+            <rect x="24" y="96" width="352" height="14" fill="#C9C0AC" opacity="0.18"/>
+            <rect x="24" y="10" width="7" height="100" fill="#FFFFFF" opacity="0.35"/>
+            <rect x="369" y="10" width="7" height="100" fill="#B7AF9E" opacity="0.2"/>
+          </g>
+          <rect x="24.6" y="10.6" width="350.8" height="98.8" rx="2.6"
+                fill="none" stroke="#B7AF9E" stroke-width="1.2"/>
+
+          <!-- ジャケットの枠(画像はHTML側で重ねる) -->
+          <rect class="art-frame" x="32" y="24" width="72" height="72" fill="#DCD5C6"
+                stroke="#33322E" stroke-width="1.4"/>
+          <!-- ジャケットが無いときの罫線 -->
+          <g class="rule-full" stroke="#8A867C" stroke-width="1.4">
+            <line x1="40" y1="42" x2="96" y2="42"/>
+            <line x1="40" y1="52" x2="96" y2="52"/>
+            <line x1="40" y1="62" x2="96" y2="62"/>
+            <line x1="40" y1="72" x2="96" y2="72"/>
+            <line x1="40" y1="82" x2="78" y2="82"/>
+          </g>
+
+          <!-- 面表示 -->
+          <rect x="344" y="24" width="26" height="26" fill="#EE3B12"/>
+          <text x="357" y="44" text-anchor="middle" fill="#F7F2E9" font-size="17"
+                font-family="'Archivo Black', sans-serif">A</text>
+
+          <!-- ラベル下段(罫線 + シリアル) -->
+          <line x1="120" y1="99" x2="370" y2="99" stroke="#B7AF9E" stroke-width="1.2"/>
+          <text id="cSerial" x="120" y="107" fill="#EE3B12" font-size="7.5" letter-spacing="1"
+                font-family="Oswald, sans-serif">SBZR-0000-CA30</text>
+          <text x="370" y="107" text-anchor="end" fill="#5C5A54" font-size="7.5" letter-spacing="1.4"
+                font-family="Oswald, sans-serif">SIDE A / 60 MIN</text>
+        </svg>
+        <div class="c-label-overlay">
+          <div class="c-title" id="cTitle">-</div>
+          <div class="c-artist" id="cArtist">-</div>
+        </div>
+        <img class="c-art" id="cArt" alt="" hidden>
+      </div>
+
+      <div class="deck-keys">
+        <button class="key" id="npPrevBtn" title="前の曲">
+          <span class="k-ico">◀◀</span><span class="k-label">REW</span>
+        </button>
+        <button class="key play" id="npPlayBtn" title="再生 / 一時停止">
+          <span class="k-ico" id="npPlayIco">▶</span><span class="k-label" id="npPlayLabel">PLAY</span>
+        </button>
+        <button class="key" id="npNextBtn" title="次の曲">
+          <span class="k-ico">▶▶</span><span class="k-label">FF</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="np-progress">
+      <span id="curTime" class="np-time">0:00</span>
+      <input type="range" id="seekBar" min="0" max="1000" value="0">
+      <span id="durTime" class="np-time">0:00</span>
+    </div>
+
+    <div class="np-controls">
+      <button id="shuffleBtn" class="toggle" title="シャッフル再生">SHUFFLE</button>
+      <button id="npFavBtn" class="toggle" title="お気に入り">♡ &nbsp;FAVORITE</button>
+    </div>
+  </div>
+
+  <!-- プレイリスト追加ダイアログ -->
+  <dialog id="plDialog" class="pl-dialog">
+    <h3>プレイリストに追加</h3>
+    <div id="plDialogList" class="pl-dialog-list"></div>
+    <div class="pl-dialog-actions">
+      <button id="plNewBtn" class="btn">新しいプレイリスト</button>
+      <button id="plCancelBtn" class="btn">キャンセル</button>
+    </div>
+  </dialog>
+
+  <!-- 生成したシェア画像のプレビュー -->
+  <dialog id="shotDialog" class="shot-dialog">
+    <h3>シェア画像</h3>
+    <img id="shotImg" alt="再生中の曲のシェア画像">
+    <p class="shot-hint">長押し(スマホ)/ 右クリック(PC)でも画像を保存できます</p>
+    <div class="pl-dialog-actions">
+      <button id="shotShareBtn" class="btn primary hidden">SNSでシェア</button>
+      <button id="shotSaveBtn" class="btn">保存</button>
+      <button id="shotCloseBtn" class="btn">閉じる</button>
+    </div>
+  </dialog>
+
+  <!-- DJミキサー(2デッキ + クロスフェーダー) -->
+  <div class="dj hidden" id="djScreen">
+    <div class="np-topbar dj-topbar">
+      <button id="djCloseBtn" class="icon-btn" title="閉じる">▼</button>
+      <span class="np-heading">DJ MIXER</span>
+      <button id="djRecBtn" class="icon-btn" title="ミックスを録音する">REC</button>
+    </div>
+
+    <div class="dj-body">
+      <div class="dj-slot" id="deckA"></div>
+
+      <section class="dj-mixer">
+        <div class="mix-meter" id="djMeter"><i></i></div>
+        <label class="fader"><span class="fader-name">CH A</span>
+          <input type="range" id="chA" min="0" max="100" value="100"></label>
+        <label class="fader"><span class="fader-name">CH B</span>
+          <input type="range" id="chB" min="0" max="100" value="100"></label>
+        <label class="fader"><span class="fader-name">MASTER</span>
+          <input type="range" id="masterVol" min="0" max="100" value="85"></label>
+        <div class="xf">
+          <span class="xf-end">A</span>
+          <input type="range" id="xfader" min="0" max="100" value="50" title="クロスフェーダー">
+          <span class="xf-end">B</span>
+          <button class="chip" id="xfCurve" title="つなぎ方のカーブ">SMOOTH</button>
+        </div>
+        <div class="automix">
+          <button class="toggle" id="autoMixBtn">AUTO MIX</button>
+          <span class="empty-note">終わりが近づいたデッキから、もう一方へ自動でつなぎます</span>
+        </div>
+      </section>
+
+      <div class="dj-slot" id="deckB"></div>
+    </div>
+  </div>
+
+  <!-- デッキ1枚ぶんの中身。A/B で同じものを使う -->
+  <template id="deckTemplate">
+    <section class="deck-panel">
+      <header class="deck-head">
+        <span class="deck-id">A</span>
+        <div class="deck-meta">
+          <div class="deck-title">曲が入っていません</div>
+          <div class="deck-sub">「曲を選ぶ」から読み込みます</div>
+        </div>
+        <button class="btn deck-load">曲を選ぶ</button>
+      </header>
+
+      <canvas class="deck-wave" width="1200" height="120"></canvas>
+
+      <div class="deck-bpm">
+        <span class="bpm-value">--.-</span><span class="bpm-unit">BPM</span>
+        <button class="chip bpm-half" title="BPMを半分にする">÷2</button>
+        <button class="chip bpm-double" title="BPMを2倍にする">×2</button>
+        <button class="chip bpm-tap" title="拍に合わせて叩くとBPMが決まる">TAP</button>
+        <span class="deck-time">0:00 / 0:00</span>
+      </div>
+
+      <div class="deck-transport">
+        <button class="key deck-cue" title="頭出し">
+          <span class="k-ico">◆</span><span class="k-label">CUE</span></button>
+        <button class="key play deck-play" title="再生 / 一時停止">
+          <span class="k-ico">▶</span><span class="k-label">PLAY</span></button>
+        <button class="key deck-sync" title="相手のデッキにテンポと拍を合わせる">
+          <span class="k-ico">⇄</span><span class="k-label">SYNC</span></button>
+        <button class="key deck-bend-back" title="押している間だけ遅らせる">
+          <span class="k-ico">◀</span><span class="k-label">BEND</span></button>
+        <button class="key deck-bend-fwd" title="押している間だけ速める">
+          <span class="k-ico">▶</span><span class="k-label">BEND</span></button>
+      </div>
+
+      <div class="deck-pads">
+        <span class="pad-label">HOT CUE</span>
+        <button class="pad hot" data-i="0">1</button>
+        <button class="pad hot" data-i="1">2</button>
+        <button class="pad hot" data-i="2">3</button>
+        <span class="pad-label">LOOP</span>
+        <button class="pad loop" data-beats="4">4</button>
+        <button class="pad loop" data-beats="8">8</button>
+        <button class="pad loop" data-beats="16">16</button>
+      </div>
+
+      <div class="deck-tempo">
+        <label class="fader"><span class="fader-name">TEMPO</span>
+          <input type="range" class="tempo" min="-16" max="16" step="0.05" value="0"></label>
+        <span class="tempo-val">+0.0%</span>
+        <button class="chip keylock" title="音程を変えずに速さだけ変える">KEY LOCK</button>
+      </div>
+
+      <div class="deck-eq">
+        <label class="knob"><input type="range" class="eq-hi" min="-100" max="100" step="1" value="0"><span>HI</span></label>
+        <label class="knob"><input type="range" class="eq-mid" min="-100" max="100" step="1" value="0"><span>MID</span></label>
+        <label class="knob"><input type="range" class="eq-low" min="-100" max="100" step="1" value="0"><span>LOW</span></label>
+        <label class="knob"><input type="range" class="filter" min="-100" max="100" step="1" value="0"><span>FILTER</span></label>
+      </div>
+    </section>
+  </template>
+
+  <dialog id="djPickDialog" class="pl-dialog dj-pick">
+    <h3>デッキ <span id="djPickDeck">A</span> に読み込む曲</h3>
+    <input type="search" id="djPickSearch" class="dj-search"
+           placeholder="曲名 / アーティスト / アルバムで絞り込む">
+    <div id="djPickList" class="dj-pick-list"></div>
+    <div class="pl-dialog-actions">
+      <button id="djPickCancel" class="btn">閉じる</button>
+    </div>
+  </dialog>
+
+  <dialog id="djMixDialog" class="pl-dialog">
+    <h3>録音したミックス</h3>
+    <audio id="djMixAudio" class="dj-mix-audio" controls></audio>
+    <p class="empty-note">サイズ: <span id="djMixSize">-</span></p>
+    <div class="pl-dialog-actions">
+      <button id="djMixSaveBtn" class="btn primary">保存</button>
+      <button id="djMixCloseBtn" class="btn">閉じる</button>
+    </div>
+  </dialog>
+
+  <div class="drop-hint" id="dropHint">ここに曲やフォルダを<br>ドロップして読み込む</div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <audio id="audio"></audio>
+  <script type="module" src="js/main.js"></script>
+  <script>
+    // APK版は画面一式を同梱しているので Service Worker は登録しない
+    if ('serviceWorker' in navigator && location.protocol !== 'file:' && !window.AndroidLibrary) {
+      window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+    }
+  </script>
+</body>
+</html>
