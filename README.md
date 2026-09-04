@@ -101,5 +101,5 @@ MIT License
 このリポジトリには、同じく「ブラウザだけで動く」3Dアクションゲームも入っています。
 2体の鬼から、ペットのアヒルが銃と手裏剣で戦いながら逃げるゲームです。
 
-- あそぶ: [`duck-escape/index.html`](duck-escape/index.html)(GitHub Pages では `/duck-escape/`)
+- あそぶ: [`duck-escape/standalone.html`](duck-escape/standalone.html) をダウンロードしてダブルクリック(サーバー不要の1ファイル版)
 - 説明: [duck-escape/README.md](duck-escape/README.md)

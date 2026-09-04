@@ -8,15 +8,28 @@
 
 ## ▶ あそびかた
 
-`index.html` をブラウザで開くだけです(GitHub Pages に公開している場合は `/duck-escape/`)。
+### いちばんかんたん: 1ファイル版(パソコン向け)
 
-ローカルで動かすときは、ES Modules の都合で簡易サーバー経由にしてください。
+**[`standalone.html`](standalone.html)** をダウンロードして、**ダブルクリックするだけ**で遊べます。
+(GitHub の `standalone.html` のページを開き、右上の **Download raw file** ボタンで保存してください)
+
+ゲーム一式が1つのHTMLに入っているので、サーバーもインストールも不要です。
+
+### もとの形(モジュール版)で動かす
+
+`index.html` は ES Modules を使っているので、簡易サーバー経由で開いてください
+(ファイルを直接ひらくとブラウザの制限で読み込めません。その場合は画面に案内が出ます)。
 
 ```bash
 cd duck-escape
 python3 -m http.server 8000
 # → http://localhost:8000 をブラウザで開く
 ```
+
+GitHub Pages に公開している場合は `/duck-escape/` でそのまま遊べます。
+
+> `standalone.html` は自動生成ファイルです。`js/` を変更したら
+> `node build-standalone.mjs` で作り直してください。
 
 ## 🎮 操作
 
@@ -68,6 +81,8 @@ python3 -m http.server 8000
 
 ```
 index.html                画面の骨組み(canvas + HUD + タイトル/結果画面)
+standalone.html           1ファイル版(自動生成。ダブルクリックで遊べる)
+build-standalone.mjs      1ファイル版を作るスクリプト(node build-standalone.mjs)
 style.css                 HUDとメニューのスタイル
 manifest.json / sw.js     PWA(ホーム画面に追加/オフライン対応)
 js/
