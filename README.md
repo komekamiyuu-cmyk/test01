@@ -93,3 +93,13 @@ ARCHITECTURE.md   # 設計ドキュメント(メンテナンス・拡張ガイ�
 ## 📄 ライセンス
 
 MIT License
+
+---
+
+## 🦆 おまけ: アヒル逃走記 3D
+
+このリポジトリには、同じく「ブラウザだけで動く」3Dアクションゲームも入っています。
+2体の鬼から、ペットのアヒルが銃と手裏剣で戦いながら逃げるゲームです。
+
+- あそぶ: [`duck-escape/index.html`](duck-escape/index.html)(GitHub Pages では `/duck-escape/`)
+- 説明: [duck-escape/README.md](duck-escape/README.md)

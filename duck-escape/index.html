@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d1a">
+<meta name="description" content="アヒル逃走記 - 2体の鬼から逃げながら、落ちている銃と手裏剣で戦う3Dアクションゲーム。ブラウザだけで遊べます。">
+<title>アヒル逃走記 3D - 2体の鬼から逃げろ!</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg">
+<link rel="apple-touch-icon" href="icon.svg">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- 3D描画先。UIはこの上にHTMLで重ねる -->
+<canvas id="view"></canvas>
+
+<!-- ============ プレイ中のHUD ============ -->
+<div id="hud" class="hud hidden">
+
+  <div class="hud-top">
+    <div class="panel hp-panel">
+      <span class="label">たいりょく</span>
+      <div id="hearts" class="hearts"></div>
+      <div class="dash-wrap"><span class="label small">ダッシュ</span><div class="dash-bar"><i id="dashFill"></i></div></div>
+    </div>
+
+    <div class="panel round-panel">
+      <div id="roundLabel" class="round-label">ラウンド 1</div>
+      <div id="oniBars" class="oni-bars"></div>
+    </div>
+
+    <div class="panel score-panel">
+      <span class="label">スコア</span>
+      <div id="score" class="score">0</div>
+      <button id="pauseBtn" class="mini-btn" title="ポーズ (P)">⏸</button>
+    </div>
+  </div>
+
+  <div id="crosshair" class="crosshair"></div>
+
+  <div class="hud-bottom">
+    <div class="panel weapon-panel">
+      <div id="weaponIcon" class="weapon-icon">✴️</div>
+      <div class="weapon-text">
+        <div id="weaponName" class="weapon-name">手裏剣</div>
+        <div id="weaponAmmo" class="weapon-ammo">×5</div>
+      </div>
+    </div>
+    <div id="weaponList" class="weapon-list"></div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <div id="damageFlash" class="damage-flash"></div>
+</div>
+
+<!-- ============ スマホ用タッチ操作 ============ -->
+<div id="touchUI" class="touch-ui hidden">
+  <div id="stick" class="stick"><i id="stickKnob"></i></div>
+  <div class="touch-buttons">
+    <button id="btnSwap" class="tbtn small">武器<br>チェンジ</button>
+    <button id="btnDash" class="tbtn small">ダッシュ</button>
+    <button id="btnFire" class="tbtn fire">うつ</button>
+  </div>
+</div>
+
+<!-- ============ タイトル ============ -->
+<div id="titleScreen" class="screen">
+  <div class="screen-inner">
+    <div class="title-duck">🦆</div>
+    <h1 class="game-title">アヒル逃走記 <span>3D</span></h1>
+    <p class="game-sub">2体の鬼が、ペットのアヒルを追ってくる。<br>落ちている <b>銃</b> と <b>手裏剣</b> で戦いながら、逃げきれ!</p>
+
+    <div class="how-to">
+      <div class="how-col">
+        <h3>⌨️ パソコン</h3>
+        <ul>
+          <li><b>W A S D</b> / 矢印キー … 移動</li>
+          <li><b>マウス</b> … 向きを変える(画面クリックで視点ロック)</li>
+          <li><b>クリック / スペース</b> … 攻撃</li>
+          <li><b>Shift</b> … ダッシュ(回避)</li>
+          <li><b>Q</b> / <b>1 2 3</b> … 武器チェンジ</li>
+          <li><b>P</b> … ポーズ</li>
+        </ul>
+      </div>
+      <div class="how-col">
+        <h3>📱 スマホ</h3>
+        <ul>
+          <li><b>左スティック</b> … 移動</li>
+          <li><b>画面右をなぞる</b> … 向きを変える</li>
+          <li><b>うつ</b> ボタン … 攻撃</li>
+          <li><b>ダッシュ</b> … 回避</li>
+        </ul>
+        <h3 class="mt">🎯 目的</h3>
+        <ul>
+          <li>ラウンドごとに <b>鬼2体</b> をたおす</li>
+          <li>最後は <b>鳥居のゲート</b> まで逃げきればクリア!</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="best-row">ハイスコア: <b id="bestScore">0</b></div>
+    <div class="difficulty">
+      <span class="label">むずかしさ</span>
+      <div class="seg" id="difficultySeg">
+        <button data-diff="easy">やさしい</button>
+        <button data-diff="normal" class="on">ふつう</button>
+        <button data-diff="hard">おに</button>
+      </div>
+    </div>
+    <button id="startBtn" class="big-btn">▶ ゲームスタート</button>
+    <p class="tiny">音が出ます。ブラウザだけで動きます(インストール不要)</p>
+  </div>
+</div>
+
+<!-- ============ ポーズ ============ -->
+<div id="pauseScreen" class="screen hidden">
+  <div class="screen-inner narrow">
+    <h2>⏸ ポーズ</h2>
+    <button id="resumeBtn" class="big-btn">つづける</button>
+    <button id="quitBtn" class="big-btn ghost">タイトルへもどる</button>
+  </div>
+</div>
+
+<!-- ============ 結果 ============ -->
+<div id="resultScreen" class="screen hidden">
+  <div class="screen-inner narrow">
+    <div id="resultIcon" class="title-duck">🎉</div>
+    <h2 id="resultTitle">クリア!</h2>
+    <p id="resultText" class="game-sub"></p>
+    <div class="score-box">
+      <div class="score-line"><span>スコア</span><b id="finalScore">0</b></div>
+      <div class="score-line sub"><span>ハイスコア</span><b id="finalBest">0</b></div>
+    </div>
+    <button id="retryBtn" class="big-btn">▶ もういちど</button>
+    <button id="titleBtn" class="big-btn ghost">タイトルへ</button>
+  </div>
+</div>
+
+<noscript><p style="color:#fff;padding:20px">このゲームは JavaScript が必要です。</p></noscript>
+
+<!-- ファイルを直接開くと、ブラウザの制限で読み込めないので案内を出す -->
+<div id="loadHelp" class="screen hidden">
+  <div class="screen-inner narrow">
+    <div class="title-duck">🛠️</div>
+    <h2>読み込めませんでした</h2>
+    <p class="game-sub" id="loadHelpText"></p>
+  </div>
+</div>
+<script>
+  setTimeout(function () {
+    if (window.__duckEscapeReady) return;
+    var box = document.getElementById('loadHelp');
+    var msg = document.getElementById('loadHelpText');
+    msg.innerHTML = (location.protocol === 'file:')
+      ? 'ファイルを直接ひらくと、ブラウザの決まりでゲームの部品(JavaScriptモジュール)を読み込めません。<br><br>' +
+        'かんたんな方法: このフォルダで<br><b>python3 -m http.server 8000</b><br>を実行し、' +
+        '<b>http://localhost:8000</b> をひらいてください。<br><br>公開ページ(https://…)からならそのまま遊べます。'
+      : 'ゲームの読み込みに失敗しました。ページを再読み込みするか、新しいブラウザ(Chrome / Edge / Safari)でお試しください。';
+    box.classList.remove('hidden');
+    document.getElementById('titleScreen').classList.add('hidden');
+  }, 2500);
+</script>
+
+<script type="module" src="js/main.js"></script>
+<script>
+  // オフラインでも遊べるようにする(対応ブラウザのみ)
+  if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+  }
+</script>
+</body>
+</html>

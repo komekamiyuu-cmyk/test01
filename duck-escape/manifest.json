@@ -1,0 +1,13 @@
+{
+  "name": "アヒル逃走記 3D",
+  "short_name": "アヒル逃走記",
+  "description": "2体の鬼から逃げながら、落ちている銃と手裏剣で戦う3Dアクションゲーム",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#05060f",
+  "theme_color": "#0b0d1a",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
