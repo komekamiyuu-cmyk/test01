@@ -5,12 +5,15 @@
 
 import { PLAYER, WEAPONS } from './config.js';
 
+// 鬼モードであなたが持つ武器(拾わない・弾切れなし)
+const CLUB = { icon: '🏏', name: '金棒' };
+
 const $ = (id) => document.getElementById(id);
 
 export function createHud() {
   const el = {
     hud: $('hud'), hearts: $('hearts'), dashFill: $('dashFill'),
-    round: $('roundLabel'), oniBars: $('oniBars'), score: $('score'),
+    round: $('roundLabel'), oniBars: $('oniBars'), score: $('score'), timer: $('timer'),
     weaponIcon: $('weaponIcon'), weaponName: $('weaponName'), weaponAmmo: $('weaponAmmo'),
     weaponList: $('weaponList'), toast: $('toast'), flash: $('damageFlash'),
     title: $('titleScreen'), pause: $('pauseScreen'), result: $('resultScreen'),
@@ -25,12 +28,22 @@ export function createHud() {
   const hud = {
     el,
 
-    setHp(hp) {
-      if (hp === lastHp) return;
-      lastHp = hp;
+    setHp(hp, max = PLAYER.maxHp) {
+      const key = hp + '/' + max;
+      if (key === lastHp) return;
+      lastHp = key;
       let s = '';
-      for (let i = 0; i < PLAYER.maxHp; i++) s += `<span class="${i < hp ? '' : 'heart-off'}">❤️</span>`;
+      for (let i = 0; i < max; i++) s += `<span class="${i < hp ? '' : 'heart-off'}">❤️</span>`;
       el.hearts.innerHTML = s;
+    },
+
+    /** のこり時間(秒)。null でかくす */
+    setTimer(sec) {
+      if (sec == null) { el.timer.classList.add('hidden'); return; }
+      el.timer.classList.remove('hidden');
+      const v = Math.max(0, Math.ceil(sec));
+      el.timer.textContent = `のこり ${v}`;
+      el.timer.classList.toggle('urgent', v <= 10);
     },
 
     setDash(ratio) { el.dashFill.style.width = `${Math.round(ratio * 100)}%`; },
@@ -44,9 +57,9 @@ export function createHud() {
 
     setRound(text) { el.round.textContent = text; },
 
-    /** 鬼のHPバーを作り直す(ラウンド開始時) */
-    buildOniBars(onis) {
-      el.oniBars.innerHTML = onis.map((o, i) =>
+    /** 相手のHPバーを作り直す(ラウンド開始時) */
+    buildOniBars(list) {
+      el.oniBars.innerHTML = list.map((o, i) =>
         `<div class="oni-row ${o.def.id}" data-i="${i}">
            <span class="nm">${o.def.name}</span>
            <div class="oni-bar"><i style="width:100%"></i></div>
@@ -63,21 +76,23 @@ export function createHud() {
       }
     },
 
+    /** ammo に null を渡すと「∞」表示(おまかせ操作や金棒) */
     setWeapon(id, ammo) {
       const key = id + ':' + ammo;
       if (key === lastAmmoKey) return;
       lastAmmoKey = key;
-      const w = WEAPONS[id];
+      const w = id === 'club' ? CLUB : WEAPONS[id];
       el.weaponIcon.textContent = w ? w.icon : '❔';
       el.weaponName.textContent = w ? w.name : '素手';
-      el.weaponAmmo.textContent = `×${ammo}`;
-      el.weaponAmmo.classList.toggle('empty', ammo <= 0);
+      el.weaponAmmo.textContent = ammo == null ? '∞' : `×${ammo}`;
+      el.weaponAmmo.classList.toggle('empty', ammo != null && ammo <= 0);
     },
 
-    setWeaponList(ammoMap, current) {
+    setWeaponList(ammoMap, current, infinite) {
+      if (!ammoMap) { el.weaponList.innerHTML = ''; return; }
       el.weaponList.innerHTML = Object.keys(WEAPONS)
         .filter(id => ammoMap[id] > 0 || id === current)
-        .map(id => `<span class="weapon-chip ${id === current ? 'on' : ''}">${WEAPONS[id].icon} ${ammoMap[id]}</span>`)
+        .map(id => `<span class="weapon-chip ${id === current ? 'on' : ''}">${WEAPONS[id].icon} ${infinite && id === current ? '∞' : ammoMap[id]}</span>`)
         .join('');
     },
 
@@ -100,6 +115,16 @@ export function createHud() {
       }
     },
 
+    /** おまかせ操作では、攻撃ボタンと照準はいらないのでかくす */
+    setAutoMode(auto, isTouch) {
+      const fire = document.getElementById('btnFire');
+      const swap = document.getElementById('btnSwap');
+      if (fire) fire.classList.toggle('hidden', !!auto);
+      if (swap) swap.classList.toggle('hidden', !!auto);
+      el.crosshair.classList.toggle('hidden', !!auto || !!isTouch);
+      el.weaponList.classList.toggle('hidden', !!auto);
+    },
+
     /** name: title / pause / result / game */
     showScreen(name, isTouch) {
       el.title.classList.toggle('hidden', name !== 'title');
@@ -110,9 +135,10 @@ export function createHud() {
       el.crosshair.classList.toggle('hidden', !!isTouch);
     },
 
-    showResult(win, score, best, detail) {
-      el.resultIcon.textContent = win ? '🎉' : '💀';
-      el.resultTitle.textContent = win ? '逃げきった!' : 'つかまってしまった…';
+    showResult(win, score, best, detail, titles) {
+      el.resultIcon.textContent = win ? (titles && titles.icon ? titles.icon : '🎉') : '💀';
+      el.resultTitle.textContent = titles ? (win ? titles.win : titles.lose)
+                                          : (win ? '逃げきった!' : 'つかまってしまった…');
       el.resultText.innerHTML = detail;
       el.finalScore.textContent = Math.round(score).toLocaleString('ja-JP');
       el.finalBest.textContent = Math.round(best).toLocaleString('ja-JP');

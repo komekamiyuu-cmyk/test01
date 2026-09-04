@@ -1,5 +1,6 @@
 /* ============================================================
-   飛び道具(アヒルの弾・手裏剣 / 鬼の鬼火)
+   飛び道具(弾・手裏剣・鬼火)
+   from が 'player' ならプレイヤーの攻撃、'enemy' なら敵の攻撃。
    当たり判定は「上から見た円どうし」で判定する軽い方式。
    ============================================================ */
 
@@ -84,11 +85,11 @@ export function createProjectiles(M, parent, effects) {
 
       if (p.from === 'player') {
         let done = false;
-        for (const oni of world.onis) {
-          if (oni.dead || p.hitSet.has(oni)) continue;
-          if (Math.hypot(oni.x - p.x, oni.z - p.z) < oni.def.radius + p.radius) {
-            world.onHitOni(oni, p);
-            p.hitSet.add(oni);
+        for (const target of world.enemies) {
+          if (target.dead || target.down || p.hitSet.has(target)) continue;
+          if (Math.hypot(target.x - p.x, target.z - p.z) < target.radius + p.radius) {
+            world.onHitEnemy(target, p);
+            p.hitSet.add(target);
             if (p.pierce > 0) p.pierce--;
             else { kill(p, i); done = true; }
             break;
@@ -97,7 +98,7 @@ export function createProjectiles(M, parent, effects) {
         if (done) continue;
       } else {
         const pl = world.player;
-        if (!pl.down && Math.hypot(pl.x - p.x, pl.z - p.z) < pl.radius + p.radius) {
+        if (!pl.down && !pl.dead && Math.hypot(pl.x - p.x, pl.z - p.z) < pl.radius + p.radius) {
           world.onHitPlayer(p);
           kill(p, i);
           continue;

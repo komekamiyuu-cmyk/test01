@@ -101,6 +101,13 @@ html, body {
 
 .round-panel { text-align: center; min-width: 210px; }
 .round-label { font-size: 15px; font-weight: 700; letter-spacing: .06em; }
+.timer {
+  margin-top: 4px; font-size: 20px; font-weight: 800; color: var(--accent2);
+  font-variant-numeric: tabular-nums; letter-spacing: .04em;
+}
+.timer.urgent { color: var(--danger); animation: pulse .6s ease-in-out infinite; }
+@keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .45 } }
+
 .oni-bars { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
 .oni-row { display: flex; align-items: center; gap: 6px; font-size: 11px; }
 .oni-row .nm { width: 34px; text-align: right; color: var(--ink-dim); }
@@ -108,6 +115,7 @@ html, body {
 .oni-bar i { display: block; height: 100%; transition: width .15s ease; }
 .oni-row.red .oni-bar i  { background: linear-gradient(90deg, #ff9a6a, var(--oni-red)); }
 .oni-row.blue .oni-bar i { background: linear-gradient(90deg, #9ad0ff, var(--oni-blue)); }
+.oni-row.duck .oni-bar i { background: linear-gradient(90deg, #fff, var(--accent)); }
 .oni-row.dead { opacity: .35; }
 
 .score-panel { min-width: 96px; text-align: right; pointer-events: auto; }
@@ -209,6 +217,15 @@ h2 { margin: 8px 0; font-size: 28px; }
 .game-sub { margin: 0 0 16px; color: var(--ink-dim); font-size: 14px; line-height: 1.7; }
 .game-sub b { color: var(--accent); }
 
+.how-to-box { margin-top: 12px; text-align: left; }
+.how-to-box > summary {
+  cursor: pointer; list-style: none; text-align: center;
+  font-size: 14px; color: var(--ink-dim); padding: 8px;
+  border: 1px dashed var(--edge); border-radius: 999px;
+}
+.how-to-box > summary::-webkit-details-marker { display: none; }
+.how-to-box[open] > summary { margin-bottom: 10px; color: var(--accent2); }
+
 .how-to { display: flex; gap: 14px; text-align: left; flex-wrap: wrap; }
 .how-col {
   flex: 1 1 260px;
@@ -220,16 +237,20 @@ h2 { margin: 8px 0; font-size: 28px; }
 .how-col ul { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.85; color: var(--ink-dim); }
 .how-col b { color: var(--ink); }
 
-.best-row { margin: 14px 0 8px; font-size: 13px; color: var(--ink-dim); }
+.best-row { margin: 10px 0 4px; font-size: 13px; color: var(--ink-dim); }
 .best-row b { color: var(--accent); font-size: 16px; }
 
-.difficulty { display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 6px; }
+.choices { display: flex; flex-direction: column; gap: 8px; align-items: center; margin: 4px 0 14px; }
+.choice-row { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.choice-row .label { min-width: 96px; text-align: right; }
 .seg { display: inline-flex; background: rgba(255,255,255,.06); border: 1px solid var(--edge); border-radius: 999px; padding: 3px; }
 .seg button {
   font-family: inherit; font-size: 13px; color: var(--ink-dim); cursor: pointer;
   background: none; border: none; border-radius: 999px; padding: 6px 14px;
 }
 .seg button.on { background: var(--accent2); color: #06202a; font-weight: 700; }
+.seg button small { display: block; font-size: 10px; opacity: .8; font-weight: 400; }
+.seg.big button { font-size: 16px; padding: 8px 18px; }
 
 .score-box { margin: 12px 0 4px; }
 .score-line { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 4px; border-bottom: 1px dashed var(--edge); }
@@ -278,6 +299,7 @@ h2 { margin: 8px 0; font-size: 28px; }
 
     <div class="panel round-panel">
       <div id="roundLabel" class="round-label">ラウンド 1</div>
+      <div id="timer" class="timer hidden">のこり 60</div>
       <div id="oniBars" class="oni-bars"></div>
     </div>
 
@@ -320,46 +342,76 @@ h2 { margin: 8px 0; font-size: 28px; }
   <div class="screen-inner">
     <div class="title-duck">🦆</div>
     <h1 class="game-title">アヒル逃走記 <span>3D</span></h1>
-    <p class="game-sub">2体の鬼が、ペットのアヒルを追ってくる。<br>落ちている <b>銃</b> と <b>手裏剣</b> で戦いながら、逃げきれ!</p>
+    <p class="game-sub">ペットのアヒル vs 2体の鬼。<br><b>どっちがわ</b>でも あそべます!</p>
 
-    <div class="how-to">
-      <div class="how-col">
-        <h3>⌨️ パソコン</h3>
-        <ul>
-          <li><b>W A S D</b> / 矢印キー … 移動</li>
-          <li><b>マウス</b> … 向きを変える(画面クリックで視点ロック)</li>
-          <li><b>クリック / スペース</b> … 攻撃</li>
-          <li><b>Shift</b> … ダッシュ(回避)</li>
-          <li><b>Q</b> / <b>1 2 3</b> … 武器チェンジ</li>
-          <li><b>P</b> … ポーズ</li>
-        </ul>
+    <div class="choices">
+      <div class="choice-row">
+        <span class="label">どっちであそぶ?</span>
+        <div class="seg big" id="sideSeg">
+          <button data-side="duck" class="on">🦆 アヒル<small>にげる</small></button>
+          <button data-side="oni">👹 鬼<small>おいかける</small></button>
+        </div>
       </div>
-      <div class="how-col">
-        <h3>📱 スマホ</h3>
-        <ul>
-          <li><b>左スティック</b> … 移動</li>
-          <li><b>画面右をなぞる</b> … 向きを変える</li>
-          <li><b>うつ</b> ボタン … 攻撃</li>
-          <li><b>ダッシュ</b> … 回避</li>
-        </ul>
-        <h3 class="mt">🎯 目的</h3>
-        <ul>
-          <li>ラウンドごとに <b>鬼2体</b> をたおす</li>
-          <li>最後は <b>鳥居のゲート</b> まで逃げきればクリア!</li>
-        </ul>
+      <div class="choice-row">
+        <span class="label">そうさ</span>
+        <div class="seg" id="controlSeg">
+          <button data-control="auto" class="on">おまかせ<small>うごかすだけ</small></button>
+          <button data-control="manual">じぶんで<small>ねらって うつ</small></button>
+        </div>
+      </div>
+      <div class="choice-row">
+        <span class="label">むずかしさ</span>
+        <div class="seg" id="difficultySeg">
+          <button data-diff="easy" class="on">やさしい</button>
+          <button data-diff="normal">ふつう</button>
+          <button data-diff="hard">おに</button>
+        </div>
       </div>
     </div>
 
-    <div class="best-row">ハイスコア: <b id="bestScore">0</b></div>
-    <div class="difficulty">
-      <span class="label">むずかしさ</span>
-      <div class="seg" id="difficultySeg">
-        <button data-diff="easy">やさしい</button>
-        <button data-diff="normal" class="on">ふつう</button>
-        <button data-diff="hard">おに</button>
-      </div>
-    </div>
     <button id="startBtn" class="big-btn">▶ ゲームスタート</button>
+    <div class="best-row">ハイスコア: <b id="bestScore">0</b></div>
+
+    <details class="how-to-box">
+      <summary>📖 あそびかた をみる</summary>
+      <div class="how-to">
+        <div class="how-col">
+          <h3>🦆 アヒルであそぶ</h3>
+          <ul>
+            <li>2体の鬼から <b>にげる</b></li>
+            <li>落ちている <b>銃</b> や <b>手裏剣</b> をひろって たたかう</li>
+            <li>鬼を2体たおすと つぎのラウンドへ</li>
+            <li>さいごは <b>鳥居のゲート</b> までにげきればクリア!</li>
+          </ul>
+        </div>
+        <div class="how-col">
+          <h3>👹 鬼であそぶ</h3>
+          <ul>
+            <li>にげるアヒルを <b>おいかけてつかまえる</b></li>
+            <li><b>金棒</b>でなぐって、アヒルのハートを0にする</li>
+            <li>アヒルは武器をひろって <b>うちかえしてくる</b></li>
+            <li>制限時間内に つかまえろ!</li>
+          </ul>
+        </div>
+        <div class="how-col">
+          <h3>🎮 そうさ</h3>
+          <ul>
+            <li><b>おまかせ</b>…うごかすだけ。ねらう・こうげき・カメラは <b>ぜんぶ自動</b></li>
+            <li>パソコン: <b>W A S D</b> / やじるしキー</li>
+            <li>スマホ: <b>左スティック</b></li>
+            <li><b>Shift</b> / ダッシュボタン … かわす</li>
+            <li><b>P</b> … ポーズ</li>
+          </ul>
+          <h3 class="mt">🎯 「じぶんで」をえらぶと</h3>
+          <ul>
+            <li>マウスで見まわす(画面クリックで視点ロック)</li>
+            <li>クリック / <b>スペース</b> でこうげき</li>
+            <li><b>Q</b> / <b>1 2 3</b> で武器チェンジ</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
     <p class="tiny">音が出ます。ブラウザだけで動きます(インストール不要)</p>
   </div>
 </div>
@@ -1166,14 +1218,14 @@ __mod['config.js'] = (function () {
   /* 鬼2体。赤は金棒で殴りにくる、青は鬼火を投げてくる */
   const ONI = {
     red: {
-      id: 'red', name: '赤鬼', hp: 180, speed: 5.5, radius: 1.05,
+      id: 'red', name: '赤鬼', hp: 180, speed: 4.6, radius: 1.05,
       color: [0.86, 0.24, 0.2], skin2: [0.62, 0.13, 0.12],
       style: 'melee',
       attackRange: 3.1, attackWindup: 0.5, attackDamage: 1, attackCooldown: 1.25,
       knockback: 3.2,
     },
     blue: {
-      id: 'blue', name: '青鬼', hp: 145, speed: 4.5, radius: 1.0,
+      id: 'blue', name: '青鬼', hp: 145, speed: 3.8, radius: 1.0,
       color: [0.27, 0.44, 0.9], skin2: [0.17, 0.28, 0.66],
       style: 'ranged',
       keepDistance: 11, attackRange: 22, attackWindup: 0.62, attackDamage: 1, attackCooldown: 2.0,
@@ -1185,15 +1237,80 @@ __mod['config.js'] = (function () {
   const ROUNDS = 3;
   const roundScale = (round) => ({
     hp: 1 + 0.4 * (round - 1),
-    speed: 1 + 0.09 * (round - 1),
+    speed: 1 + 0.06 * (round - 1),
     rate: 1 - 0.12 * (round - 1),   // 攻撃間隔の倍率(小さいほど速い)
   });
   
   /** むずかしさ(タイトルで選ぶ) */
   const DIFFICULTY = {
-    easy:   { label: 'やさしい', oniHp: 0.8, oniSpeed: 0.88, oniRate: 1.25, itemRate: 0.78, scoreMul: 0.8 },
-    normal: { label: 'ふつう',   oniHp: 1.0, oniSpeed: 1.0,  oniRate: 1.0,  itemRate: 1.0,  scoreMul: 1.0 },
-    hard:   { label: 'おに',     oniHp: 1.3, oniSpeed: 1.12, oniRate: 0.8,  itemRate: 1.35, scoreMul: 1.6 },
+    // duckAim/duckRate は鬼モードで「逃げるアヒルのねらいの正確さと撃つ間隔」
+    easy:   { label: 'やさしい', oniHp: 0.7, oniSpeed: 0.82, oniRate: 1.35, itemRate: 0.75, scoreMul: 0.8, duckAim: 1.5, duckRate: 1.3 },
+    normal: { label: 'ふつう',   oniHp: 1.0, oniSpeed: 1.0,  oniRate: 1.0,  itemRate: 1.0,  scoreMul: 1.0, duckAim: 1.0, duckRate: 1.0 },
+    hard:   { label: 'おに',     oniHp: 1.3, oniSpeed: 1.15, oniRate: 0.8,  itemRate: 1.35, scoreMul: 1.6, duckAim: 0.6, duckRate: 0.75 },
+  };
+  
+  /**
+   * そうさ方法。
+   * auto は「動かすだけ」で遊べる子ども向け。ねらう・撃つ・カメラはぜんぶおまかせ。
+   */
+  const CONTROLS = {
+    auto:   { label: 'おまかせ', autoAim: true,  autoFire: true,  cameraAssist: true,  infiniteAmmo: true },
+    manual: { label: 'じぶんで', autoAim: false, autoFire: false, cameraAssist: false, infiniteAmmo: false },
+  };
+  
+  /** どちらを操作するか */
+  const SIDES = {
+    duck: { label: 'アヒル', icon: '🦆' },
+    oni:  { label: '鬼',     icon: '👹' },
+  };
+  
+  /* ============================================================
+     鬼モード(あなたが鬼になってアヒルを追いかける)
+     ============================================================ */
+  
+  /** あなたが操作する赤鬼 */
+  const ONI_PLAYER = {
+    maxHp: 5,
+    speed: 8.2,          // 逃げるアヒルより速い(追いつけるように)
+    radius: 1.0,
+    turnSpeed: 9,
+    dashSpeed: 16,
+    dashTime: 0.32,
+    dashCooldown: 1.2,
+    invuln: 1.5,
+    attackRange: 4.6,        // 金棒はリーチが長い(子どもでも当てやすく)
+    attackWindup: 0.1,
+    attackHit: 0.1,
+    attackTotal: 0.38,
+    attackCooldown: 0.42,
+    attackDamage: 1,
+    attackAngle: 1.5,
+    autoSwingMargin: 1.2,    // おまかせ操作は少し早めに振りはじめる
+  };
+  
+  /** 逃げるアヒル(AI) */
+  const DUCK_AI = {
+    maxHp: 5,
+    speed: 6.2,             // 鬼(8.2)より遅い。ジグザグとダッシュでかわす
+    radius: 0.62,
+    invuln: 0.9,
+    panicDistance: 13,      // これより鬼が近いと全力で逃げる
+    itemSeek: 18,           // これ以内に落ちているアイテムは取りに行く
+    shootRange: 17,
+    shootCooldown: 2.0,
+    aimError: 0.25,         // AIはすこし雑にねらう(当たりすぎないように)
+    firstShotDelay: 2.6,
+    dashCooldown: 4.0,
+  };
+  
+  const ONI_MODE = {
+    rounds: 3,
+    timeLimit: 75,          // 1ラウンドの制限時間(秒)
+    duckSpeedPerRound: 0.07,
+    duckHpPerRound: 0,
+    helperFromRound: 1,     // 青鬼(なかま)が手伝ってくれるラウンド
+    catchScore: 1200,
+    timeLeftScore: 25,
   };
   
   /* 落ちているアイテム */
@@ -1243,7 +1360,7 @@ __mod['config.js'] = (function () {
     torii:      [0.82, 0.20, 0.18],
   };
   
-  return { ARENA, PLAYER, WEAPONS, START_WEAPON, ONI, ROUNDS, roundScale, DIFFICULTY, PICKUPS, SCORE, CAMERA, PALETTE };
+  return { ARENA, PLAYER, WEAPONS, START_WEAPON, ONI, ROUNDS, roundScale, DIFFICULTY, CONTROLS, SIDES, ONI_PLAYER, DUCK_AI, ONI_MODE, PICKUPS, SCORE, CAMERA, PALETTE };
 })();
 
 __mod['models/meshes.js'] = (function () {
@@ -1855,12 +1972,15 @@ __mod['hud.js'] = (function () {
   
   const { PLAYER, WEAPONS } = __mod['config.js'];
   
+  // 鬼モードであなたが持つ武器(拾わない・弾切れなし)
+  const CLUB = { icon: '🏏', name: '金棒' };
+  
   const $ = (id) => document.getElementById(id);
   
   function createHud() {
     const el = {
       hud: $('hud'), hearts: $('hearts'), dashFill: $('dashFill'),
-      round: $('roundLabel'), oniBars: $('oniBars'), score: $('score'),
+      round: $('roundLabel'), oniBars: $('oniBars'), score: $('score'), timer: $('timer'),
       weaponIcon: $('weaponIcon'), weaponName: $('weaponName'), weaponAmmo: $('weaponAmmo'),
       weaponList: $('weaponList'), toast: $('toast'), flash: $('damageFlash'),
       title: $('titleScreen'), pause: $('pauseScreen'), result: $('resultScreen'),
@@ -1875,12 +1995,22 @@ __mod['hud.js'] = (function () {
     const hud = {
       el,
   
-      setHp(hp) {
-        if (hp === lastHp) return;
-        lastHp = hp;
+      setHp(hp, max = PLAYER.maxHp) {
+        const key = hp + '/' + max;
+        if (key === lastHp) return;
+        lastHp = key;
         let s = '';
-        for (let i = 0; i < PLAYER.maxHp; i++) s += `<span class="${i < hp ? '' : 'heart-off'}">❤️</span>`;
+        for (let i = 0; i < max; i++) s += `<span class="${i < hp ? '' : 'heart-off'}">❤️</span>`;
         el.hearts.innerHTML = s;
+      },
+  
+      /** のこり時間(秒)。null でかくす */
+      setTimer(sec) {
+        if (sec == null) { el.timer.classList.add('hidden'); return; }
+        el.timer.classList.remove('hidden');
+        const v = Math.max(0, Math.ceil(sec));
+        el.timer.textContent = `のこり ${v}`;
+        el.timer.classList.toggle('urgent', v <= 10);
       },
   
       setDash(ratio) { el.dashFill.style.width = `${Math.round(ratio * 100)}%`; },
@@ -1894,9 +2024,9 @@ __mod['hud.js'] = (function () {
   
       setRound(text) { el.round.textContent = text; },
   
-      /** 鬼のHPバーを作り直す(ラウンド開始時) */
-      buildOniBars(onis) {
-        el.oniBars.innerHTML = onis.map((o, i) =>
+      /** 相手のHPバーを作り直す(ラウンド開始時) */
+      buildOniBars(list) {
+        el.oniBars.innerHTML = list.map((o, i) =>
           `<div class="oni-row ${o.def.id}" data-i="${i}">
              <span class="nm">${o.def.name}</span>
              <div class="oni-bar"><i style="width:100%"></i></div>
@@ -1913,21 +2043,23 @@ __mod['hud.js'] = (function () {
         }
       },
   
+      /** ammo に null を渡すと「∞」表示(おまかせ操作や金棒) */
       setWeapon(id, ammo) {
         const key = id + ':' + ammo;
         if (key === lastAmmoKey) return;
         lastAmmoKey = key;
-        const w = WEAPONS[id];
+        const w = id === 'club' ? CLUB : WEAPONS[id];
         el.weaponIcon.textContent = w ? w.icon : '❔';
         el.weaponName.textContent = w ? w.name : '素手';
-        el.weaponAmmo.textContent = `×${ammo}`;
-        el.weaponAmmo.classList.toggle('empty', ammo <= 0);
+        el.weaponAmmo.textContent = ammo == null ? '∞' : `×${ammo}`;
+        el.weaponAmmo.classList.toggle('empty', ammo != null && ammo <= 0);
       },
   
-      setWeaponList(ammoMap, current) {
+      setWeaponList(ammoMap, current, infinite) {
+        if (!ammoMap) { el.weaponList.innerHTML = ''; return; }
         el.weaponList.innerHTML = Object.keys(WEAPONS)
           .filter(id => ammoMap[id] > 0 || id === current)
-          .map(id => `<span class="weapon-chip ${id === current ? 'on' : ''}">${WEAPONS[id].icon} ${ammoMap[id]}</span>`)
+          .map(id => `<span class="weapon-chip ${id === current ? 'on' : ''}">${WEAPONS[id].icon} ${infinite && id === current ? '∞' : ammoMap[id]}</span>`)
           .join('');
       },
   
@@ -1950,6 +2082,16 @@ __mod['hud.js'] = (function () {
         }
       },
   
+      /** おまかせ操作では、攻撃ボタンと照準はいらないのでかくす */
+      setAutoMode(auto, isTouch) {
+        const fire = document.getElementById('btnFire');
+        const swap = document.getElementById('btnSwap');
+        if (fire) fire.classList.toggle('hidden', !!auto);
+        if (swap) swap.classList.toggle('hidden', !!auto);
+        el.crosshair.classList.toggle('hidden', !!auto || !!isTouch);
+        el.weaponList.classList.toggle('hidden', !!auto);
+      },
+  
       /** name: title / pause / result / game */
       showScreen(name, isTouch) {
         el.title.classList.toggle('hidden', name !== 'title');
@@ -1960,9 +2102,10 @@ __mod['hud.js'] = (function () {
         el.crosshair.classList.toggle('hidden', !!isTouch);
       },
   
-      showResult(win, score, best, detail) {
-        el.resultIcon.textContent = win ? '🎉' : '💀';
-        el.resultTitle.textContent = win ? '逃げきった!' : 'つかまってしまった…';
+      showResult(win, score, best, detail, titles) {
+        el.resultIcon.textContent = win ? (titles && titles.icon ? titles.icon : '🎉') : '💀';
+        el.resultTitle.textContent = titles ? (win ? titles.win : titles.lose)
+                                            : (win ? '逃げきった!' : 'つかまってしまった…');
         el.resultText.innerHTML = detail;
         el.finalScore.textContent = Math.round(score).toLocaleString('ja-JP');
         el.finalBest.textContent = Math.round(best).toLocaleString('ja-JP');
@@ -2421,7 +2564,8 @@ __mod['game/effects.js'] = (function () {
 
 __mod['game/projectiles.js'] = (function () {
   /* ============================================================
-     飛び道具(アヒルの弾・手裏剣 / 鬼の鬼火)
+     飛び道具(弾・手裏剣・鬼火)
+     from が 'player' ならプレイヤーの攻撃、'enemy' なら敵の攻撃。
      当たり判定は「上から見た円どうし」で判定する軽い方式。
      ============================================================ */
   
@@ -2506,11 +2650,11 @@ __mod['game/projectiles.js'] = (function () {
   
         if (p.from === 'player') {
           let done = false;
-          for (const oni of world.onis) {
-            if (oni.dead || p.hitSet.has(oni)) continue;
-            if (Math.hypot(oni.x - p.x, oni.z - p.z) < oni.def.radius + p.radius) {
-              world.onHitOni(oni, p);
-              p.hitSet.add(oni);
+          for (const target of world.enemies) {
+            if (target.dead || target.down || p.hitSet.has(target)) continue;
+            if (Math.hypot(target.x - p.x, target.z - p.z) < target.radius + p.radius) {
+              world.onHitEnemy(target, p);
+              p.hitSet.add(target);
               if (p.pierce > 0) p.pierce--;
               else { kill(p, i); done = true; }
               break;
@@ -2519,7 +2663,7 @@ __mod['game/projectiles.js'] = (function () {
           if (done) continue;
         } else {
           const pl = world.player;
-          if (!pl.down && Math.hypot(pl.x - p.x, pl.z - p.z) < pl.radius + p.radius) {
+          if (!pl.down && !pl.dead && Math.hypot(pl.x - p.x, pl.z - p.z) < pl.radius + p.radius) {
             world.onHitPlayer(p);
             kill(p, i);
             continue;
@@ -2605,20 +2749,28 @@ __mod['game/pickups.js'] = (function () {
   
     return {
       items, create, spawnRandom,
-      /** 拾ったら onCollect(kind) を呼ぶ */
-      update(dt, player, onCollect) {
+      /**
+       * 拾い手は複数いてよい(アヒルと鬼など)。
+       * collectors: [{ who, accept(kind)->bool, onCollect(kind) }]
+       */
+      update(dt, collectors) {
         t += dt;
         for (let i = items.length - 1; i >= 0; i--) {
           const it = items[i];
           it.bob.pos.y = 0.9 + Math.sin(t * 2.2 + it.phase) * 0.16;
           it.bob.rot.y += dt * 1.4;
           if (it.spin) it.spin.rot.z += dt * 5;
-          if (player && !player.down && Math.hypot(player.x - it.x, player.z - it.z) < PICKUPS.radius + player.radius) {
-            const c = GLOW_COLOR[it.kind] || [1, 1, 1];
-            effects.burst(it.x, 1, it.z, 12, c, { speed: 4.5, size: 0.13, life: 0.5 });
-            effects.ring(it.x, 0.06, it.z, c, 0.4, 3, 0.4);
+          for (const c of collectors) {
+            const who = c.who;
+            if (!who || who.down || who.dead) continue;
+            if (c.accept && !c.accept(it.kind)) continue;
+            if (Math.hypot(who.x - it.x, who.z - it.z) > PICKUPS.radius + who.radius) continue;
+            const col = GLOW_COLOR[it.kind] || [1, 1, 1];
+            effects.burst(it.x, 1, it.z, 12, col, { speed: 4.5, size: 0.13, life: 0.5 });
+            effects.ring(it.x, 0.06, it.z, col, 0.4, 3, 0.4);
             remove(it);
-            onCollect(it.kind);
+            c.onCollect(it.kind);
+            break;
           }
         }
       },
@@ -2669,6 +2821,8 @@ __mod['game/player.js'] = (function () {
       ammo: { shuriken: 0, pistol: 0, machinegun: 0 },
       current: START_WEAPON.id,
       speed: 0,
+      aimYaw: null,          // オートエイム中はこの向きを向く
+      infiniteAmmo: false,   // 「おまかせ操作」では弾切れなし
       model,
       stats: { damage: 0, shots: 0 },
     };
@@ -2682,6 +2836,7 @@ __mod['game/player.js'] = (function () {
       p.ammo = { shuriken: 0, pistol: 0, machinegun: 0 };
       p.ammo[START_WEAPON.id] = START_WEAPON.ammo;
       p.current = START_WEAPON.id;
+      p.aimYaw = null;
       p.stats = { damage: 0, shots: 0 };
       model.setWeapon(p.current);
       model.root.visible = true;
@@ -2729,13 +2884,13 @@ __mod['game/player.js'] = (function () {
       if (p.down || p.cooldown > 0) return false;
       const w = WEAPONS[p.current];
       if (!w) return false;
-      if (p.ammo[p.current] <= 0) {
+      if (p.ammo[p.current] <= 0 && !p.infiniteAmmo) {
         p.cooldown = 0.25;
         audio.play('empty');
         p.switchWeapon(1);
         return false;
       }
-      p.ammo[p.current]--;
+      if (!p.infiniteAmmo) p.ammo[p.current]--;
       p.cooldown = w.cooldown;
       p.stats.shots++;
   
@@ -2831,9 +2986,10 @@ __mod['game/player.js'] = (function () {
       p.x = clamp(nx, -lim, lim);
       p.z = clamp(nz, -lim, lim);
   
-      // 向き: 撃っているときはカメラの向き、ふだんは進行方向
+      // 向き: オートエイム中は敵の方、撃っているときはカメラの向き、ふだんは進行方向
       let want = p.facing;
-      if (input.fire && !p.down) want = camYaw;
+      if (p.aimYaw != null && !p.down) want = p.aimYaw;
+      else if (input.fire && !p.down) want = camYaw;
       else if (moveLen > 0.05) want = Math.atan2(vx, vz);
       p.facing = turnToward(p.facing, want, dt * PLAYER.turnSpeed);
   
@@ -2906,6 +3062,7 @@ __mod['game/enemy.js'] = (function () {
     const e = {
       def, model,
       x: 0, z: 0, facing: 0,
+      radius: def.radius,
       maxHp: Math.round(def.hp * mul.hp),
       hp: Math.round(def.hp * mul.hp),
       speed: def.speed * mul.speed,
@@ -2920,9 +3077,13 @@ __mod['game/enemy.js'] = (function () {
   
     e.place = function (x, z) { e.x = x; e.z = z; e.facing = Math.atan2(-x, -z); };
   
-    e.takeDamage = function (dmg, dirX, dirZ, world) {
+    /** fromX/fromZ は「攻撃してきた側の位置」。そこから外向きにふっとぶ */
+    e.takeDamage = function (dmg, fromX, fromZ) {
       if (e.dead) return 0;
       const before = e.hp;
+      let dirX = e.x - fromX, dirZ = e.z - fromZ;
+      const dl = Math.hypot(dirX, dirZ) || 1;
+      dirX /= dl; dirZ /= dl;
       e.hp = Math.max(0, e.hp - dmg);
       e.flash = 1;
       e.knockX += dirX * def.knockback;
@@ -2957,7 +3118,7 @@ __mod['game/enemy.js'] = (function () {
     }
   
     e.update = function (dt, world) {
-      const pl = world.player;
+      const pl = world.oniTarget;
       e.flash = Math.max(0, e.flash - dt * 3.5);
   
       if (e.dead) {
@@ -3021,7 +3182,7 @@ __mod['game/enemy.js'] = (function () {
             for (let i = 0; i < shots; i++) {
               const a = base + (i - (shots - 1) / 2) * 0.16;
               world.projectiles.spawn({
-                kind: 'onifire', from: 'oni',
+                kind: 'onifire', from: world.oniFaction || 'enemy',
                 x: e.x + Math.sin(a) * 1.2, y: 2.0, z: e.z + Math.cos(a) * 1.2,
                 dx: Math.sin(a), dz: Math.cos(a),
                 speed: def.projectileSpeed, damage: def.attackDamage,
@@ -3038,8 +3199,7 @@ __mod['game/enemy.js'] = (function () {
             e.hitDone = true;
             const ang = Math.abs(((toPlayer - e.facing + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
             if (dist < def.attackRange + 0.9 && ang < 1.1) {
-              pl.takeDamage(def.attackDamage, e.x, e.z, world);
-              world.onPlayerHurt && world.onPlayerHurt();
+              if (pl.takeDamage(def.attackDamage, e.x, e.z, world)) world.onTargetHurt && world.onTargetHurt(pl);
             }
             effects.burst(e.x + dirX * 2.2, 1.2, e.z + dirZ * 2.2, 12, [1, 0.6, 0.3], { speed: 6, size: 0.16, life: 0.4 });
             effects.ring(e.x + dirX * 2.2, 0.07, e.z + dirZ * 2.2, [1, 0.6, 0.3], 0.6, 3.2, 0.35);
@@ -3058,11 +3218,11 @@ __mod['game/enemy.js'] = (function () {
       e.knockZ *= Math.max(0, 1 - dt * 6);
   
       // 仲間どうしが重ならないように
-      for (const other of world.onis) {
+      for (const other of world.onis || []) {
         if (other === e || other.dead) continue;
         const ox = e.x - other.x, oz = e.z - other.z;
         const d = Math.hypot(ox, oz);
-        const min = def.radius + other.def.radius;
+        const min = def.radius + (other.radius || other.def.radius);
         if (d < min && d > 0.0001) {
           e.x = other.x + (ox / d) * min;
           e.z = other.z + (oz / d) * min;
@@ -3100,16 +3260,469 @@ __mod['game/enemy.js'] = (function () {
   return { createOniEntity };
 })();
 
+__mod['game/oni-player.js'] = (function () {
+  /* ============================================================
+     あなたが操作する鬼(鬼モード)
+     金棒でなぐってアヒルをつかまえる。移動と攻撃だけのシンプル操作。
+     ============================================================ */
+  
+  const { add, remove: removeNode } = __mod['engine/scene.js'];
+  const { createOni } = __mod['models/oni.js'];
+  const { ONI, ONI_PLAYER, ARENA } = __mod['config.js'];
+  const { turnToward, clamp } = __mod['engine/math.js'];
+  
+  function createOniPlayer(M, parent, audio, effects) {
+    const def = ONI.red;
+    const model = createOni(M, def);
+    model.bar.root.visible = false;      // 体力はHUDのハートで見せる
+    add(parent, model.root);
+    add(parent, model.shadow);
+  
+    const p = {
+      def, model,
+      x: 0, z: 0, facing: 0,
+      radius: ONI_PLAYER.radius,
+      hp: ONI_PLAYER.maxHp,
+      maxHp: ONI_PLAYER.maxHp,
+      down: false, dead: false,
+      invuln: 0, flash: 0,
+      dash: 0, dashCd: 0, dashDir: { x: 0, z: 1 },
+      attack: 0, attackCd: 0, hitDone: false,
+      speed: 0,
+      aimYaw: null,
+      stats: { hits: 0, caught: 0 },
+      lastVx: 0, lastVz: 0,
+    };
+  
+    p.reset = function () {
+      p.x = 0; p.z = 6; p.facing = Math.PI;
+      p.hp = ONI_PLAYER.maxHp;
+      p.down = false; p.dead = false;
+      p.invuln = 0; p.flash = 0;
+      p.dash = 0; p.dashCd = 0;
+      p.attack = 0; p.attackCd = 0;
+      p.aimYaw = null;
+      p.stats = { hits: 0, caught: 0 };
+      model.root.visible = true;
+      model.shadow.visible = true;
+      model.root.rot.z = 0;
+    };
+  
+    /** アヒルが落としたハートは鬼も拾える */
+    p.give = function (kind) {
+      if (kind === 'heart') {
+        p.hp = Math.min(ONI_PLAYER.maxHp, p.hp + 1);
+        audio.play('heal');
+      }
+    };
+  
+    p.takeDamage = function (n, fromX, fromZ) {
+      if (p.down || p.invuln > 0) return false;
+      p.hp -= n;
+      p.invuln = ONI_PLAYER.invuln;
+      p.flash = 1;
+      const dx = p.x - fromX, dz = p.z - fromZ;
+      const l = Math.hypot(dx, dz) || 1;
+      p.knockX = (dx / l) * 4;
+      p.knockZ = (dz / l) * 4;
+      effects.burst(p.x, 2.2, p.z, 12, [1, 0.6, 0.4], { speed: 5, size: 0.16, life: 0.5 });
+      audio.play('hitOni');
+      if (p.hp <= 0) { p.hp = 0; p.down = true; audio.play('oniDown'); }
+      return true;
+    };
+  
+    /** 金棒をふる。当たり判定は少し遅れて出る */
+    p.swing = function () {
+      if (p.down || p.attack > 0 || p.attackCd > 0) return false;
+      p.attack = ONI_PLAYER.attackTotal;
+      p.hitDone = false;
+      p.attackCd = ONI_PLAYER.attackCooldown;
+      audio.play('oniSwing');
+      return true;
+    };
+  
+    p.tryDash = function (input, camYaw) {
+      if (p.down || p.dashCd > 0 || p.dash > 0) return false;
+      let vx = Math.sin(p.facing), vz = Math.cos(p.facing);
+      if (Math.hypot(input.move.x, input.move.y) > 0.1) {
+        const f = { x: Math.sin(camYaw), z: Math.cos(camYaw) };
+        const r = { x: Math.cos(camYaw), z: -Math.sin(camYaw) };
+        vx = f.x * input.move.y + r.x * input.move.x;
+        vz = f.z * input.move.y + r.z * input.move.x;
+        const l = Math.hypot(vx, vz) || 1;
+        vx /= l; vz /= l;
+      }
+      p.dashDir = { x: vx, z: vz };
+      p.dash = ONI_PLAYER.dashTime;
+      p.dashCd = ONI_PLAYER.dashCooldown;
+      effects.burst(p.x, 0.5, p.z, 12, [1, 0.7, 0.5], { speed: 4.5, size: 0.14, life: 0.4, up: 0.2 });
+      audio.play('dash');
+      return true;
+    };
+  
+    p.update = function (dt, input, camYaw, world) {
+      p.invuln = Math.max(0, p.invuln - dt);
+      p.flash = Math.max(0, p.flash - dt * 3);
+      p.dashCd = Math.max(0, p.dashCd - dt);
+      p.attackCd = Math.max(0, p.attackCd - dt);
+  
+      let vx = 0, vz = 0;
+      if (!p.down) {
+        const f = { x: Math.sin(camYaw), z: Math.cos(camYaw) };
+        const r = { x: Math.cos(camYaw), z: -Math.sin(camYaw) };
+        vx = f.x * input.move.y + r.x * input.move.x;
+        vz = f.z * input.move.y + r.z * input.move.x;
+        const l = Math.hypot(vx, vz);
+        if (l > 1) { vx /= l; vz /= l; }
+      }
+  
+      if (p.dash > 0) { p.dash -= dt; vx = p.dashDir.x; vz = p.dashDir.z; }
+      const moveLen = Math.hypot(vx, vz);
+      let speed = p.dash > 0 ? ONI_PLAYER.dashSpeed : ONI_PLAYER.speed;
+      if (p.attack > 0) speed *= 0.78;                     // 振っている間は少しゆっくり
+      p.speed = moveLen * speed;
+  
+      let nx = p.x + vx * speed * dt;
+      let nz = p.z + vz * speed * dt;
+      if (p.knockX || p.knockZ) {
+        nx += p.knockX * dt; nz += p.knockZ * dt;
+        p.knockX = (p.knockX || 0) * Math.max(0, 1 - dt * 7);
+        p.knockZ = (p.knockZ || 0) * Math.max(0, 1 - dt * 7);
+      }
+  
+      for (const o of world.obstacles) {
+        const dx = nx - o.x, dz = nz - o.z;
+        const d = Math.hypot(dx, dz);
+        const min = o.r + p.radius * 0.9;
+        if (d < min && d > 0.0001) {
+          nx = o.x + (dx / d) * min;
+          nz = o.z + (dz / d) * min;
+        }
+      }
+      const lim = ARENA.half - 1.6;
+      p.x = clamp(nx, -lim, lim);
+      p.z = clamp(nz, -lim, lim);
+      p.lastVx = vx * speed;
+      p.lastVz = vz * speed;
+  
+      // 向き
+      let want = p.facing;
+      if (p.aimYaw != null && !p.down) want = p.aimYaw;
+      else if (moveLen > 0.05) want = Math.atan2(vx, vz);
+      else if (input.fire) want = camYaw;
+      p.facing = turnToward(p.facing, want, dt * ONI_PLAYER.turnSpeed);
+  
+      // 攻撃の当たり判定
+      let phase = 'walk';
+      let t = 0;
+      if (p.attack > 0) {
+        const done = ONI_PLAYER.attackTotal - p.attack;
+        p.attack -= dt;
+        phase = done < ONI_PLAYER.attackWindup ? 'windup' : 'attack';
+        t = phase === 'windup' ? done / ONI_PLAYER.attackWindup : (done - ONI_PLAYER.attackWindup) / 0.3;
+        if (!p.hitDone && done >= ONI_PLAYER.attackWindup + ONI_PLAYER.attackHit) {
+          p.hitDone = true;
+          const hx = p.x + Math.sin(p.facing) * 2.4;
+          const hz = p.z + Math.cos(p.facing) * 2.4;
+          effects.burst(hx, 1.2, hz, 12, [1, 0.7, 0.35], { speed: 6, size: 0.16, life: 0.4 });
+          effects.ring(hx, 0.07, hz, [1, 0.7, 0.35], 0.6, 3.4, 0.35);
+          for (const target of world.enemies) {
+            if (target.dead || target.down) continue;
+            const dx = target.x - p.x, dz = target.z - p.z;
+            const dist = Math.hypot(dx, dz);
+            const ang = Math.abs(((Math.atan2(dx, dz) - p.facing + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
+            if (dist < ONI_PLAYER.attackRange + target.radius && ang < ONI_PLAYER.attackAngle) {
+              world.onOniHit(target, ONI_PLAYER.attackDamage, p);
+            }
+          }
+        }
+      }
+      if (p.down) phase = 'down';
+  
+      model.root.pos.x = p.x;
+      model.root.pos.z = p.z;
+      model.root.rot.y = p.facing;
+      model.shadow.pos.x = p.x;
+      model.shadow.pos.z = p.z;
+  
+      // 無敵中は点滅
+      const blink = p.invuln > 0 ? (Math.sin(p.invuln * 40) * 0.5 + 0.5) * 0.6 : 0;
+      model.update(dt, {
+        speed: p.speed, phase, t: clamp(t, 0, 1),
+        flash: Math.max(p.flash, blink),
+        hpRatio: p.hp / p.maxHp,
+        camYaw: world.camYaw,
+      });
+    };
+  
+    p.dispose = function () {
+      removeNode(parent, model.root);
+      removeNode(parent, model.shadow);
+    };
+  
+    p.reset();
+    return p;
+  }
+  
+  return { createOniPlayer };
+})();
+
+__mod['game/duck-ai.js'] = (function () {
+  /* ============================================================
+     逃げるアヒル(AI) — 鬼モードのときの「追われる側」
+     ・鬼から離れる方向へ逃げる
+     ・落ちている武器やハートを拾いに行く
+     ・ときどき立ち止まって撃ち返してくる
+     プレイヤーのアヒル(player.js)と同じ見た目を使う。
+     ============================================================ */
+  
+  const { add, remove: removeNode } = __mod['engine/scene.js'];
+  const { createDuck } = __mod['models/duck.js'];
+  const { DUCK_AI, WEAPONS, START_WEAPON, ARENA } = __mod['config.js'];
+  const { turnToward, clamp } = __mod['engine/math.js'];
+  
+  function createDuckAi(M, parent, audio, effects, mul = {}) {
+    const model = createDuck(M);
+    add(parent, model.root);
+    add(parent, model.shadow);
+  
+    const d = {
+      def: { id: 'duck', name: 'アヒル', color: [1, 0.86, 0.4], radius: DUCK_AI.radius },
+      model,
+      x: 0, z: 0, facing: 0,
+      radius: DUCK_AI.radius,
+      maxHp: DUCK_AI.maxHp,
+      hp: DUCK_AI.maxHp,
+      speed: DUCK_AI.speed * (mul.speed || 1),
+      dead: false, down: false, deadTime: 0,
+      invuln: 0, hurtFlash: 0,
+      dash: 0, dashCd: 0, dashDir: { x: 0, z: 1 },
+      shootCd: DUCK_AI.firstShotDelay,
+      aimError: DUCK_AI.aimError * (mul.aim || 1),
+      shootWait: DUCK_AI.shootCooldown * (mul.rate || 1),
+      moveSpeed: 0,
+      ammo: { shuriken: START_WEAPON.ammo, pistol: 0, machinegun: 0 },
+      current: START_WEAPON.id,
+      lastVx: 0, lastVz: 0,
+    };
+    model.setWeapon(d.current);
+  
+    d.place = function (x, z) { d.x = x; d.z = z; d.facing = Math.atan2(-x, -z); };
+  
+    /** アイテムを拾ったとき(鬼モードでもアヒルは武器を拾う) */
+    d.give = function (kind) {
+      if (kind === 'heart') {
+        d.hp = Math.min(d.maxHp, d.hp + 1);
+        audio.play('heal');
+        return;
+      }
+      const w = WEAPONS[kind];
+      if (!w) return;
+      d.ammo[kind] = Math.min(w.maxAmmo, d.ammo[kind] + w.pickupAmmo);
+      d.current = kind;
+      model.setWeapon(kind);
+      audio.play('pickup');
+    };
+  
+    /** fromX/fromZ は「攻撃してきた側の位置」 */
+    d.takeDamage = function (n, fromX, fromZ) {
+      if (d.dead || d.invuln > 0) return 0;
+      d.hp = Math.max(0, d.hp - n);
+      d.invuln = DUCK_AI.invuln;
+      d.hurtFlash = 1;
+      const dx = d.x - fromX, dz = d.z - fromZ;
+      const l = Math.hypot(dx, dz) || 1;
+      d.knockX = (dx / l) * 7;
+      d.knockZ = (dz / l) * 7;
+      effects.burst(d.x, 1.0, d.z, 12, [1, 0.9, 0.6], { speed: 5, size: 0.14, life: 0.5 });
+      audio.play('quack');
+      if (d.hp <= 0) {
+        d.dead = true;
+        d.down = true;
+        d.deadTime = 0;
+        effects.burst(d.x, 1.0, d.z, 24, [1, 0.95, 0.8], { speed: 7, size: 0.18, life: 0.9 });
+        effects.ring(d.x, 0.07, d.z, [1, 0.9, 0.5], 0.6, 5, 0.7);
+        audio.play('oniDown');
+      }
+      return n;
+    };
+  
+    /** 撃ち返す */
+    function shoot(world, tx, tz) {
+      const w = WEAPONS[d.current];
+      // 弾がなければ撃たない(拾うまでひたすら逃げる)
+      if (!w || d.ammo[d.current] <= 0) {
+        for (const id of ['pistol', 'machinegun', 'shuriken']) {
+          if (d.ammo[id] > 0) { d.current = id; model.setWeapon(id); return true; }
+        }
+        return false;
+      }
+      d.ammo[d.current]--;
+      const base = Math.atan2(tx - d.x, tz - d.z) + (Math.random() - 0.5) * d.aimError * 2;
+      const count = 1;               // AIは1発ずつ(強すぎないように)
+      for (let i = 0; i < count; i++) {
+        const a = base + (i - (count - 1) / 2) * w.spread * 2 + (Math.random() - 0.5) * 0.06;
+        world.projectiles.spawn({
+          kind: w.kind, from: 'enemy',
+          x: d.x + Math.sin(a) * 0.9, y: 1.0, z: d.z + Math.cos(a) * 0.9,
+          dx: Math.sin(a), dz: Math.cos(a),
+          speed: w.speed * 0.8, damage: 1, life: w.life,
+          radius: w.radius, pierce: 0,
+        });
+      }
+      model.recoil();
+      audio.play(d.current === 'shuriken' ? 'shuriken' : 'pistol');
+      return true;
+    }
+  
+    d.update = function (dt, world) {
+      d.invuln = Math.max(0, d.invuln - dt);
+      d.hurtFlash = Math.max(0, d.hurtFlash - dt * 3);
+      d.dashCd = Math.max(0, d.dashCd - dt);
+      d.shootCd = Math.max(0, d.shootCd - dt);
+  
+      if (d.dead) {
+        d.deadTime += dt;
+        model.root.pos.x = d.x; model.root.pos.z = d.z;
+        model.root.rot.z = Math.min(1.5, d.deadTime * 4);
+        model.shadow.pos.x = d.x; model.shadow.pos.z = d.z;
+        model.shadow.opacity = Math.max(0, 0.34 - d.deadTime * 0.2);
+        model.update(dt, { speed: 0, dashing: false, invuln: 0, hurtFlash: 0 });
+        return;
+      }
+  
+      // ---- どっちへ逃げるか(まわりから受ける「押される力」を足し合わせる) ----
+      let ax = 0, az = 0;
+      let nearest = null, nearestD = 1e9;
+      for (const o of world.chasers) {
+        if (o.dead || o.down) continue;
+        const dx = d.x - o.x, dz = d.z - o.z;
+        const dist = Math.hypot(dx, dz) || 0.001;
+        if (dist < nearestD) { nearestD = dist; nearest = o; }
+        const w = clamp(1 - dist / DUCK_AI.panicDistance, 0, 1);
+        ax += (dx / dist) * w * 2.6;
+        az += (dz / dist) * w * 2.6;
+      }
+  
+      // 壁ぎわに追いつめられないよう、内側へ戻る力
+      const lim = ARENA.half - 1.2;
+      const edge = 9;
+      if (d.x > lim - edge) ax -= (d.x - (lim - edge)) / edge * 2.2;
+      if (d.x < -lim + edge) ax += (-lim + edge - d.x) / edge * 2.2;
+      if (d.z > lim - edge) az -= (d.z - (lim - edge)) / edge * 2.2;
+      if (d.z < -lim + edge) az += (-lim + edge - d.z) / edge * 2.2;
+  
+      // 岩や木をよける
+      for (const o of world.obstacles) {
+        const dx = d.x - o.x, dz = d.z - o.z;
+        const dist = Math.hypot(dx, dz);
+        if (dist < o.r + 3.5 && dist > 0.001) {
+          const w = (o.r + 3.5 - dist) / 3.5;
+          ax += (dx / dist) * w * 1.6;
+          az += (dz / dist) * w * 1.6;
+        }
+      }
+  
+      // 危なくないときは、落ちているアイテムを取りに行く
+      if (nearestD > DUCK_AI.panicDistance * 0.75 && world.pickupItems) {
+        let best = null, bestD = DUCK_AI.itemSeek;
+        for (const it of world.pickupItems) {
+          const dist = Math.hypot(it.x - d.x, it.z - d.z);
+          if (dist < bestD) { bestD = dist; best = it; }
+        }
+        if (best) {
+          const dx = best.x - d.x, dz = best.z - d.z;
+          const l = Math.hypot(dx, dz) || 1;
+          ax += (dx / l) * 2.0;
+          az += (dz / l) * 2.0;
+        }
+      }
+  
+      let len = Math.hypot(ax, az);
+      if (len > 0.001) { ax /= len; az /= len; } else { ax = Math.sin(d.facing); az = Math.cos(d.facing); }
+  
+      // 鬼がすぐそばに来たらダッシュでかわす
+      if (nearest && nearestD < 4.5 && d.dashCd <= 0) {
+        d.dash = 0.24;
+        d.dashCd = DUCK_AI.dashCooldown;
+        d.dashDir = { x: ax, z: az };
+        effects.burst(d.x, 0.4, d.z, 8, [0.9, 0.95, 1], { speed: 3.5, size: 0.1, life: 0.3, up: 0.2 });
+        audio.play('dash');
+      }
+  
+      let vx = ax, vz = az;
+      let speed = d.speed * (len > 0.15 ? 1 : 0.35);
+      if (d.dash > 0) {
+        d.dash -= dt;
+        vx = d.dashDir.x; vz = d.dashDir.z;
+        speed = d.speed * 2.1;
+      }
+  
+      // 撃ち返すあいだは少しゆっくり
+      let aiming = false;
+      if (nearest && nearestD < DUCK_AI.shootRange && nearestD > DUCK_AI.minShootDistance && d.shootCd <= 0 && d.dash <= 0) {
+        aiming = shoot(world, nearest.x, nearest.z) !== false;
+        d.shootCd = d.shootWait;
+      }
+      if (aiming) speed *= 0.5;
+  
+      d.x += vx * speed * dt + (d.knockX || 0) * dt;
+      d.z += vz * speed * dt + (d.knockZ || 0) * dt;
+      d.knockX = (d.knockX || 0) * Math.max(0, 1 - dt * 7);
+      d.knockZ = (d.knockZ || 0) * Math.max(0, 1 - dt * 7);
+      d.moveSpeed = speed;
+      d.lastVx = vx * speed;
+      d.lastVz = vz * speed;
+  
+      for (const o of world.obstacles) {
+        const dx = d.x - o.x, dz = d.z - o.z;
+        const dist = Math.hypot(dx, dz);
+        const min = o.r + d.radius;
+        if (dist < min && dist > 0.0001) {
+          d.x = o.x + (dx / dist) * min;
+          d.z = o.z + (dz / dist) * min;
+        }
+      }
+      d.x = clamp(d.x, -lim, lim);
+      d.z = clamp(d.z, -lim, lim);
+  
+      // 撃つときは鬼の方、ふだんは進む方を向く
+      const want = (aiming && nearest) ? Math.atan2(nearest.x - d.x, nearest.z - d.z) : Math.atan2(vx, vz);
+      d.facing = turnToward(d.facing, want, dt * 10);
+  
+      model.root.pos.x = d.x;
+      model.root.pos.z = d.z;
+      model.root.rot.y = d.facing;
+      model.shadow.pos.x = d.x;
+      model.shadow.pos.z = d.z;
+      model.update(dt, { speed: d.moveSpeed, dashing: d.dash > 0, invuln: d.invuln, hurtFlash: d.hurtFlash });
+    };
+  
+    d.dispose = function () {
+      removeNode(parent, model.root);
+      removeNode(parent, model.shadow);
+    };
+  
+    return d;
+  }
+  
+  return { createDuckAi };
+})();
+
 __mod['main.js'] = (function () {
   /* ============================================================
      アヒル逃走記 3D — エントリポイント
      「どのモジュールが何を知っているか」を決めて配線する場所。
-     ゲームの進行(ラウンド管理・スコア・カメラ)もここが持つ。
+     ゲームの進行(モード・ラウンド・スコア・カメラ)もここが持つ。
+  
+     モードは2つ:
+       アヒル側 … 2体の鬼から逃げながら戦う
+       鬼側     … アヒルを追いかけてつかまえる
      ============================================================ */
   
   const { createRenderer } = __mod['engine/gl.js'];
   const { node, add, collect, createCamera } = __mod['engine/scene.js'];
-  const { clamp, lerp } = __mod['engine/math.js'];
+  const { clamp, lerp, turnToward, wrapAngle } = __mod['engine/math.js'];
   const { createMeshes } = __mod['models/meshes.js'];
   const { createWorld } = __mod['models/world.js'];
   const { createEffects } = __mod['game/effects.js'];
@@ -3117,12 +3730,14 @@ __mod['main.js'] = (function () {
   const { createPickups } = __mod['game/pickups.js'];
   const { createPlayer } = __mod['game/player.js'];
   const { createOniEntity } = __mod['game/enemy.js'];
+  const { createOniPlayer } = __mod['game/oni-player.js'];
+  const { createDuckAi } = __mod['game/duck-ai.js'];
   const { createInput } = __mod['game/input.js'];
   const { createAudio } = __mod['game/audio.js'];
   const { createHud } = __mod['hud.js'];
-  const { ARENA, CAMERA, DIFFICULTY, ONI, PICKUPS, ROUNDS, SCORE, roundScale } = __mod['config.js'];
+  const { ARENA, CAMERA, CONTROLS, DIFFICULTY, ONI, ONI_MODE, ONI_PLAYER, PICKUPS, PLAYER, ROUNDS, SCORE, roundScale } = __mod['config.js'];
   
-  const BEST_KEY = 'duck-escape-best';
+  const BEST_KEY = { duck: 'duck-escape-best', oni: 'duck-escape-best-oni' };
   const canvas = document.getElementById('view');
   
   /* ---------------- 3Dの土台 ---------------- */
@@ -3148,11 +3763,14 @@ __mod['main.js'] = (function () {
   const projectiles = createProjectiles(M, scene, effects);
   const pickups = createPickups(M, scene, effects);
   const audio = createAudio();
-  const player = createPlayer(M, scene, audio, effects);
   const hud = createHud();
   
-  // 敵/ゲートの方向を示す矢印(アヒルの真上に浮かぶ)
-  const guideArrow = add(scene, node({ mesh: M.cone, sx: 0.4, sz: 0.4, sy: 0.75, rx: Math.PI / 2, emissive: 0.85, visible: false }));
+  const duckPlayer = createPlayer(M, scene, audio, effects);   // アヒル側であなたが動かすアヒル
+  const oniPlayer = createOniPlayer(M, scene, audio, effects); // 鬼側であなたが動かす赤鬼
+  let duckAi = null;                                           // 鬼側で逃げるアヒル(AI)
+  
+  // 相手(またはゲート)の方向を示す矢印。あなたの真上に浮かぶ
+  const guideArrow = add(scene, node({ mesh: M.cone, sx: 0.32, sz: 0.32, sy: 0.62, rx: Math.PI / 2, emissive: 0.85, visible: false }));
   
   const input = createInput(canvas, {
     stick: document.getElementById('stick'),
@@ -3166,53 +3784,91 @@ __mod['main.js'] = (function () {
   
   const G = {
     mode: 'title',              // title / playing / paused / result
-    phase: 'round',             // round(戦闘中) / interval(次の準備) / escape(ゲートへ) / over
+    side: 'duck',               // duck(アヒル側) / oni(鬼側)
+    control: 'auto',            // auto(おまかせ) / manual(じぶんで)
+    difficulty: 'easy',
+    phase: 'round',             // round / interval / escape / over
     round: 1,
-    difficulty: 'normal',
     score: 0,
     time: 0,
     timer: 0,
-    onis: [],
+    roundTime: 0,               // 鬼モードののこり時間
+    onis: [],                   // AIの鬼
+    enemies: [],                // あなたの攻撃が当たる相手
     spawnTimer: 0,
-    best: Number(localStorage.getItem(BEST_KEY) || 0),
+    best: { duck: Number(localStorage.getItem(BEST_KEY.duck) || 0), oni: Number(localStorage.getItem(BEST_KEY.oni) || 0) },
     camYaw: Math.PI,
     camPitch: CAMERA.pitch,
+    camDist: null,
     shake: 0,
-    won: false,
   };
   
-  hud.setBest(G.best);
+  const ctrl = () => CONTROLS[G.control];
+  const me = () => (G.side === 'duck' ? duckPlayer : oniPlayer);
   
-  /** 鬼や弾から見た「世界」。各モジュールはこのオブジェクト越しに触り合う */
+  hud.setBest(G.best[G.side]);
+  
+  /** 各モジュールが共有する「世界」。ここ越しに触り合う */
   const worldRef = {
     obstacles: world3d.obstacles,
     onis: G.onis,
-    player,
+    enemies: G.enemies,
+    player: duckPlayer,
+    oniTarget: duckPlayer,     // AIの鬼が追いかける相手
+    oniFaction: 'enemy',       // AIの鬼の弾がどちら側の攻撃か
+    chasers: [],               // AIのアヒルが逃げる相手
+    pickupItems: pickups.items,
     projectiles,
     round: 1,
     camYaw: 0,
-    onHitOni(oni, p) {
-      const dirX = p.vx, dirZ = p.vz;
-      const l = Math.hypot(dirX, dirZ) || 1;
-      const dealt = oni.takeDamage(p.damage, dirX / l, dirZ / l, worldRef);
-      player.stats.damage += dealt;
+  
+    /** あなたの飛び道具が相手に当たった */
+    onHitEnemy(target, p) {
+      const dealt = target.takeDamage(p.damage, p.x - p.vx * 0.05, p.z - p.vz * 0.05, worldRef) || 0;
+      me().stats.damage = (me().stats.damage || 0) + dealt;
       addScore(dealt * SCORE.perDamage);
-      if (oni.dead) {
-        addScore(SCORE.oniDefeated);
-        hud.toast(`${oni.def.name} をたおした!`, 1400);
-        G.shake = Math.max(G.shake, 0.5);
+      if (target.dead) onEnemyDown(target);
+    },
+  
+    /** あなたが飛び道具を受けた */
+    onHitPlayer(p) {
+      const dmg = G.side === 'oni' ? 1 : p.damage;
+      if (worldRef.player.takeDamage(dmg, p.x, p.z, worldRef)) onPlayerHurt();
+    },
+  
+    /** AIの鬼の攻撃が「追いかけている相手」に当たった */
+    onTargetHurt(who) {
+      if (who === worldRef.player) onPlayerHurt();
+      else if (who.dead) onEnemyDown(who);
+    },
+  
+    /** あなた(鬼)の金棒が当たった */
+    onOniHit(target, dmg) {
+      const dealt = target.takeDamage(dmg, oniPlayer.x, oniPlayer.z, worldRef);
+      if (dealt) {
+        oniPlayer.stats.hits++;
+        G.shake = Math.max(G.shake, 0.45);
+        audio.play('hitOni');
+        if (target.dead) onEnemyDown(target);
       }
     },
-    onHitPlayer(p) {
-      if (player.takeDamage(p.damage, p.x, p.z, worldRef)) onPlayerHurt();
-    },
-    onPlayerHurt: () => onPlayerHurt(),
   };
+  
+  function onEnemyDown(target) {
+    G.shake = Math.max(G.shake, 0.6);
+    if (G.side === 'duck') {
+      addScore(SCORE.oniDefeated);
+      hud.toast(`${target.def.name} をたおした!`, 1400);
+    } else {
+      hud.toast('アヒルをつかまえた!', 1600);
+      audio.play('clear');
+    }
+  }
   
   function onPlayerHurt() {
     hud.damageFlash();
     G.shake = Math.max(G.shake, 0.75);
-    if (player.down) {
+    if (worldRef.player.down) {
       G.phase = 'over';
       G.timer = 1.8;
       audio.play('gameover');
@@ -3222,21 +3878,38 @@ __mod['main.js'] = (function () {
   
   function addScore(v) { G.score += v * DIFFICULTY[G.difficulty].scoreMul; }
   
-  /* ---------------- ラウンド進行 ---------------- */
+  /* ---------------- ラウンドの用意 ---------------- */
   
-  function clearOnis() {
+  function clearActors() {
     for (const o of G.onis) o.dispose();
     G.onis.length = 0;
+    G.enemies.length = 0;
+    if (duckAi) { duckAi.dispose(); duckAi = null; }
+    worldRef.chasers = [];
   }
   
-  function startRound(n) {
-    clearOnis();
+  /** ラウンド開始時に落ちているアイテムをばらまく */
+  function scatterItems(round) {
+    const picker = pickups.picker(round);
+    const count = Math.round(PICKUPS.startCount * DIFFICULTY[G.difficulty].itemRate);
+    for (let i = 0; i < count; i++) pickups.spawnRandom(picker, worldRef, worldRef.player);
+    G.spawnTimer = PICKUPS.spawnInterval;
+  }
+  
+  /* ---- アヒル側: 鬼2体からにげる ---- */
+  
+  function startDuckRound(n) {
+    clearActors();
     G.round = n;
     worldRef.round = n;
     G.phase = 'round';
     const rs = roundScale(n);
     const df = DIFFICULTY[G.difficulty];
-    const mul = { hp: rs.hp * df.oniHp, speed: rs.speed * df.oniSpeed, rate: rs.rate * df.oniRate };
+    const mul = {
+      hp: rs.hp * df.oniHp,
+      speed: rs.speed * df.oniSpeed * (ctrl().autoAim ? 0.92 : 1),   // おまかせ操作ならもう少しゆっくり
+      rate: rs.rate * df.oniRate,
+    };
   
     const spots = [[-1, -1], [1, 1]];
     [ONI.red, ONI.blue].forEach((def, i) => {
@@ -3244,24 +3917,21 @@ __mod['main.js'] = (function () {
       const [sx, sz] = spots[i];
       e.place(sx * (ARENA.half - 7), sz * (ARENA.half - 7));
       G.onis.push(e);
+      G.enemies.push(e);
       effects.ring(e.x, 0.08, e.z, def.color, 1, 7, 0.9);
       effects.burst(e.x, 1.5, e.z, 18, def.color, { speed: 7, size: 0.2, life: 0.8 });
     });
   
     hud.buildOniBars(G.onis);
     hud.setRound(`ラウンド ${n} / ${ROUNDS}`);
+    hud.setTimer(null);
     hud.toast(`ラウンド ${n} — 鬼があらわれた!`, 1900);
     audio.play('roundStart');
     audio.play('oniRoar');
-  
-    // 開始時のアイテム
-    const picker = pickups.picker(n);
-    const count = Math.round(PICKUPS.startCount * DIFFICULTY[G.difficulty].itemRate);
-    for (let i = 0; i < count; i++) pickups.spawnRandom(picker, worldRef, player);
-    G.spawnTimer = PICKUPS.spawnInterval;
+    scatterItems(n);
   }
   
-  function finishRound() {
+  function finishDuckRound() {
     addScore(SCORE.roundClear);
     if (G.round >= ROUNDS) {
       G.phase = 'escape';
@@ -3273,74 +3943,155 @@ __mod['main.js'] = (function () {
     } else {
       G.phase = 'interval';
       G.timer = 3.2;
-      player.hp = Math.min(5, player.hp + 1);       // 少し回復してひと息
+      duckPlayer.hp = Math.min(PLAYER.maxHp, duckPlayer.hp + 1);   // 少し回復してひと息
       hud.toast('鬼を2体ともたおした!<br>つぎのラウンドがくるぞ…', 2600);
       audio.play('clear');
     }
   }
   
-  function endGame(win) {
-    G.mode = 'result';
-    G.won = win;
-    audio.stopBgm();
-    input.setEnabled(false);
+  /* ---- 鬼側: アヒルをつかまえる ---- */
   
-    let detail = '';
-    if (win) {
-      const timeBonus = Math.max(0, SCORE.timeBonusMax - G.time * SCORE.timeBonusPerSec);
-      addScore(SCORE.escape + player.hp * SCORE.hpLeft + timeBonus);
-      detail = `タイム <b>${G.time.toFixed(1)}秒</b> / のこり体力 <b>${player.hp}</b><br>` +
-               `あたえたダメージ <b>${Math.round(player.stats.damage)}</b>`;
-      audio.play('clear');
-    } else {
-      detail = `ラウンド <b>${G.round}</b> でつかまった…<br>` +
-               `あたえたダメージ <b>${Math.round(player.stats.damage)}</b> / タイム <b>${G.time.toFixed(1)}秒</b>`;
+  function startOniRound(n) {
+    clearActors();
+    G.round = n;
+    worldRef.round = n;
+    G.phase = 'round';
+    G.roundTime = ONI_MODE.timeLimit;
+  
+    const df = DIFFICULTY[G.difficulty];
+    const speedMul = (1 + ONI_MODE.duckSpeedPerRound * (n - 1)) * (2 - df.oniSpeed) * (ctrl().autoAim ? 0.94 : 1);
+    duckAi = createDuckAi(M, scene, audio, effects, { speed: speedMul, aim: df.duckAim, rate: df.duckRate });
+    duckAi.place(oniPlayer.x - 11, oniPlayer.z - 11);   // 近すぎず遠すぎない位置から逃げ出す
+    G.enemies.push(duckAi);
+    worldRef.oniTarget = duckAi;
+    effects.ring(duckAi.x, 0.08, duckAi.z, [1, 0.95, 0.7], 1, 6, 0.9);
+  
+    // なかまの青鬼(ラウンドが進むと手伝ってくれる)
+    if (n >= ONI_MODE.helperFromRound) {
+      const mul = { hp: 99, speed: 0.85 * df.oniSpeed, rate: 1.1 };
+      const helper = createOniEntity(M, scene, ONI.blue, mul, audio, effects);
+      helper.place(ARENA.half - 9, -(ARENA.half - 9));
+      G.onis.push(helper);
     }
-    const score = Math.round(G.score);
-    if (score > G.best) {
-      G.best = score;
-      localStorage.setItem(BEST_KEY, String(score));
-      detail += '<br>🏆 ハイスコア更新!';
-    }
-    hud.setBest(G.best);
-    hud.showResult(win, score, G.best, detail);
-    hud.showScreen('result', input.state.isTouch);
+    worldRef.chasers = [oniPlayer, ...G.onis];
+  
+    hud.buildOniBars([duckAi]);
+    hud.setRound(`ラウンド ${n} / ${ONI_MODE.rounds}`);
+    hud.setTimer(G.roundTime);
+    hud.toast(`ラウンド ${n} — アヒルをつかまえろ!`, 1900);
+    audio.play('roundStart');
+    audio.play('oniRoar');
+    scatterItems(n);
   }
+  
+  function finishOniRound() {
+    // つかまえた分の得点は、どうやって倒しても必ずここで入る
+    oniPlayer.stats.caught++;
+    addScore(ONI_MODE.catchScore + Math.max(0, G.roundTime) * ONI_MODE.timeLeftScore);
+    if (G.round >= ONI_MODE.rounds) { endGame(true); return; }
+    G.phase = 'interval';
+    G.timer = 3.0;
+    oniPlayer.hp = Math.min(ONI_PLAYER.maxHp, oniPlayer.hp + 1);
+    hud.toast('つぎのアヒルがにげだした!', 2400);
+  }
+  
+  /* ---------------- ゲーム開始・終了 ---------------- */
   
   function startGame() {
     audio.unlock();
     G.mode = 'playing';
     G.score = 0;
     G.time = 0;
-    G.won = false;
     G.camYaw = Math.PI;
     G.camPitch = CAMERA.pitch;
+    G.camDist = null;
     projectiles.clear();
     pickups.clear();
-    player.reset();
+    clearActors();
     world3d.gate.setOpen(false);
-    startRound(1);
-    hud.setHp(player.hp);
+  
+    const c = ctrl();
+    duckPlayer.infiniteAmmo = c.infiniteAmmo;
+    duckPlayer.reset();
+    oniPlayer.reset();
+  
+    // 使わない方は画面から消しておく
+    duckPlayer.model.root.visible = duckPlayer.model.shadow.visible = (G.side === 'duck');
+    oniPlayer.model.root.visible = oniPlayer.model.shadow.visible = (G.side === 'oni');
+  
+    worldRef.player = me();
+    worldRef.oniTarget = duckPlayer;
+    worldRef.oniFaction = G.side === 'duck' ? 'enemy' : 'player';
+  
+    if (G.side === 'duck') startDuckRound(1);
+    else startOniRound(1);
+  
+    hud.setHp(worldRef.player.hp, worldRef.player.maxHp || PLAYER.maxHp);
     hud.showScreen('game', input.state.isTouch);
+    hud.setAutoMode(c.autoFire, input.state.isTouch);
     input.setEnabled(true);
     audio.startBgm();
   }
   
+  function endGame(win) {
+    G.mode = 'result';
+    audio.stopBgm();
+    input.setEnabled(false);
+  
+    let detail = '', titles;
+    if (G.side === 'duck') {
+      titles = { win: '逃げきった!', lose: 'つかまってしまった…', icon: '🎉' };
+      if (win) {
+        const timeBonus = Math.max(0, SCORE.timeBonusMax - G.time * SCORE.timeBonusPerSec);
+        addScore(SCORE.escape + duckPlayer.hp * SCORE.hpLeft + timeBonus);
+        detail = `タイム <b>${G.time.toFixed(1)}秒</b> / のこり体力 <b>${duckPlayer.hp}</b><br>` +
+                 `あたえたダメージ <b>${Math.round(duckPlayer.stats.damage)}</b>`;
+      } else {
+        detail = `ラウンド <b>${G.round}</b> でつかまった…<br>` +
+                 `あたえたダメージ <b>${Math.round(duckPlayer.stats.damage || 0)}</b> / タイム <b>${G.time.toFixed(1)}秒</b>`;
+      }
+    } else {
+      titles = { win: 'ぜんぶつかまえた!', lose: 'にげられた…', icon: '👹' };
+      if (win) addScore(oniPlayer.hp * SCORE.hpLeft);
+      detail = `つかまえたアヒル <b>${oniPlayer.stats.caught}匹</b> / ラウンド <b>${G.round}</b><br>` +
+               `なぐった回数 <b>${oniPlayer.stats.hits}</b> / タイム <b>${G.time.toFixed(1)}秒</b>`;
+    }
+    audio.play(win ? 'clear' : 'gameover');
+  
+    const score = Math.round(G.score);
+    if (score > G.best[G.side]) {
+      G.best[G.side] = score;
+      localStorage.setItem(BEST_KEY[G.side], String(score));
+      detail += '<br>🏆 ハイスコア更新!';
+    }
+    hud.setBest(G.best[G.side]);
+    hud.showResult(win, score, G.best[G.side], detail, titles);
+    hud.showScreen('result', input.state.isTouch);
+  }
+  
   /* ---------------- カメラ ---------------- */
   
-  function updateCamera(dt, look) {
+  function updateCamera(dt, look, target) {
     const sens = input.state.isTouch ? CAMERA.touchSens : CAMERA.mouseSens;
     G.camYaw -= look.dx * sens;
     G.camPitch = clamp(G.camPitch - look.dy * sens, CAMERA.minPitch, CAMERA.maxPitch);
   
-    const tx = player.x, tz = player.z;
-    const wantDist = CAMERA.distance * (1 - G.camPitch * 0.35);
-    const height = CAMERA.height + G.camPitch * 6;
+    // 「おまかせ」では、見たいものの方へカメラがゆっくり自分で回る
+    if (ctrl().cameraAssist && target) {
+      const want = Math.atan2(target.x - worldRef.player.x, target.z - worldRef.player.z);
+      const diff = wrapAngle(want - G.camYaw);
+      if (Math.abs(diff) > 0.5) G.camYaw = turnToward(G.camYaw, want, dt * 1.7);
+    }
+  
+    const tx = worldRef.player.x, tz = worldRef.player.z;
+    const tall = G.side === 'oni' ? 1.6 : 1;
+    const wantDist = CAMERA.distance * tall * (1 - G.camPitch * 0.35);
+    const height = (CAMERA.height + G.camPitch * 6) * tall;
   
     // 壁や木にカメラがめり込まないよう、当たる手前まで引き寄せる
     const dirX = -Math.sin(G.camYaw), dirZ = -Math.cos(G.camYaw);
     const lim = ARENA.half - 1.4;
-    let ratio = 0.45;
+    let ratio = 0.42;
     const steps = 10;
     for (let i = steps; i >= 1; i--) {
       const f = i / steps;
@@ -3354,10 +4105,14 @@ __mod['main.js'] = (function () {
     G.camDist = lerp(G.camDist == null ? wantDist : G.camDist, wantDist * ratio,
                      Math.min(1, dt * (ratio * wantDist < G.camDist ? 18 : 5)));
   
-    const cx = tx + dirX * G.camDist;
-    const cz = tz + dirZ * G.camDist;
+    // 塀の外に出てしまわないよう、最後に念のため内側へ押しもどす
+    const rawX = tx + dirX * G.camDist, rawZ = tz + dirZ * G.camDist;
+    const cx = clamp(rawX, -lim, lim);
+    const cz = clamp(rawZ, -lim, lim);
     const near = G.camDist / wantDist;
-    const cy = Math.max(1.6, 1.2 + height * (1.3 - 0.3 * near));   // 近づいたぶん見おろす
+    let cy = Math.max(1.6, 1.2 + height * (1.3 - 0.3 * near));     // 近づいたぶん見おろす
+    // 塀ぎわで押しもどされたときは、塀の上から見おろす高さまで持ち上げる
+    if (Math.abs(cx - rawX) + Math.abs(cz - rawZ) > 0.2) cy = Math.max(cy, ARENA.wallH + 3.4);
   
     G.shake = Math.max(0, G.shake - dt * CAMERA.shakeDecay);
     const sh = G.shake * G.shake * 0.9;
@@ -3365,32 +4120,35 @@ __mod['main.js'] = (function () {
     camera.pos.y = cy + (Math.random() - 0.5) * sh;
     camera.pos.z = cz + (Math.random() - 0.5) * sh;
     camera.target.x = tx;
-    camera.target.y = 1.4 + G.camPitch * 1.2;
+    camera.target.y = (G.side === 'oni' ? 2.4 : 1.4) + G.camPitch * 1.2;
     camera.target.z = tz;
     worldRef.camYaw = G.camYaw;
   }
   
-  /** 追ってくる鬼(または脱出ゲート)の方向を、アヒルの上の矢印で知らせる */
-  function updateGuideArrow() {
-    let target = null, color = null;
-    if (G.phase === 'escape') {
-      target = { x: world3d.gate.x, z: world3d.gate.z };
-      color = [1, 0.85, 0.35];
-    } else {
-      let best = 1e9;
-      for (const o of G.onis) {
-        if (o.dead) continue;
-        const d = Math.hypot(o.x - player.x, o.z - player.z);
-        if (d < best) { best = d; target = o; color = o.def.color; }
-      }
+  /** いま気にするべき相手(矢印・オートエイム・カメラの向き先) */
+  function currentTarget() {
+    if (G.side === 'duck' && G.phase === 'escape') {
+      return { x: world3d.gate.x, z: world3d.gate.z, color: [1, 0.85, 0.35], gate: true };
     }
-    if (!target || player.down) { guideArrow.visible = false; return; }
+    let best = null, bestD = 1e9;
+    for (const e of G.enemies) {
+      if (e.dead || e.down) continue;
+      const d = Math.hypot(e.x - worldRef.player.x, e.z - worldRef.player.z);
+      if (d < bestD) { bestD = d; best = e; }
+    }
+    if (!best) return null;
+    return { x: best.x, z: best.z, color: best.def.color, entity: best, dist: bestD };
+  }
+  
+  function updateGuideArrow(target) {
+    const p = worldRef.player;
+    if (!target || p.down) { guideArrow.visible = false; return; }
     guideArrow.visible = true;
-    guideArrow.color = color;
-    guideArrow.pos.x = player.x;
-    guideArrow.pos.z = player.z;
-    guideArrow.pos.y = 2.9 + Math.sin(elapsed * 4) * 0.14;
-    guideArrow.rot.y = Math.atan2(target.x - player.x, target.z - player.z);
+    guideArrow.color = target.color;
+    guideArrow.pos.x = p.x;
+    guideArrow.pos.z = p.z;
+    guideArrow.pos.y = (G.side === 'oni' ? 5.2 : 3.15) + Math.sin(elapsed * 4) * 0.14;
+    guideArrow.rot.y = Math.atan2(target.x - p.x, target.z - p.z);
   }
   
   function titleCamera(t) {
@@ -3401,8 +4159,8 @@ __mod['main.js'] = (function () {
     camera.pos.y = 7.5;
     camera.target.x = 0; camera.target.y = 1.6; camera.target.z = 0;
     worldRef.camYaw = a + Math.PI;
-    player.model.root.rot.y = a + Math.PI + 0.4;
-    player.model.update(1 / 60, { speed: 0, dashing: false, invuln: 0, hurtFlash: 0 });
+    duckPlayer.model.root.rot.y = a + Math.PI + 0.4;
+    duckPlayer.model.update(1 / 60, { speed: 0, dashing: false, invuln: 0, hurtFlash: 0 });
   }
   
   /* ---------------- メインループ ---------------- */
@@ -3434,29 +4192,57 @@ __mod['main.js'] = (function () {
   
   function step(dt) {
     G.time += dt;
+    const c = ctrl();
+    const p = worldRef.player;
   
     const st = input.sample();
     const look = input.consumeLook();
     const edges = input.consumeEdges();
   
     if (edges.pause) { pause(); return; }
-    if (edges.dash) player.tryDash(st, G.camYaw);
-    if (edges.swap) player.switchWeapon(1);
-    if (edges.pick !== undefined) player.selectWeapon(edges.pick);
+    if (edges.dash) p.tryDash(st, G.camYaw);
+    if (G.side === 'duck') {
+      if (edges.swap) duckPlayer.switchWeapon(1);
+      if (edges.pick !== undefined) duckPlayer.selectWeapon(edges.pick);
+    }
   
-    updateCamera(dt, look);
+    const target = currentTarget();
+    updateCamera(dt, look, target);
   
-    const beforeX = player.x, beforeZ = player.z;
-    player.update(dt, st, G.camYaw, worldRef);
-    player.lastVx = (player.x - beforeX) / dt;
-    player.lastVz = (player.z - beforeZ) / dt;
+    // ---- ねらい(おまかせなら自動) ----
+    const targetDist = target && target.entity ? target.dist : Infinity;
+    if (c.autoAim && target && target.entity && targetDist < (G.side === 'duck' ? 30 : 18)) {
+      p.aimYaw = Math.atan2(target.x - p.x, target.z - p.z);
+    } else {
+      p.aimYaw = null;
+    }
   
-    if (st.fire) player.fire(worldRef);
+    const beforeX = p.x, beforeZ = p.z;
+    p.update(dt, st, G.camYaw, worldRef);
+    p.lastVx = (p.x - beforeX) / dt;
+    p.lastVz = (p.z - beforeZ) / dt;
   
+    // ---- ダッシュ(おまかせなら自動。動いている向きへ飛ぶ) ----
+    if (c.autoFire && Math.hypot(st.move.x, st.move.y) > 0.2 && targetDist < Infinity) {
+      const wantDash = G.side === 'duck' ? targetDist < 5.5 : (targetDist > 4.5 && targetDist < 12);
+      if (wantDash) p.tryDash(st, G.camYaw);
+    }
+  
+    // ---- 攻撃 ----
+    if (G.side === 'duck') {
+      const auto = c.autoFire && target && target.entity && targetDist < 26;
+      if (st.fire || auto) duckPlayer.fire(worldRef);
+    } else {
+      const auto = c.autoFire && targetDist < ONI_PLAYER.attackRange + ONI_PLAYER.autoSwingMargin;
+      if (st.fire || auto) oniPlayer.swing();
+    }
+  
+    // ---- まわりの更新 ----
     for (const o of G.onis) o.update(dt, worldRef);
-    updateGuideArrow();
+    if (duckAi) duckAi.update(dt, worldRef);
+    updateGuideArrow(target);
     projectiles.update(dt, worldRef);
-    pickups.update(dt, player, (kind) => player.give(kind));
+    pickups.update(dt, collectors());
     effects.update(dt);
   
     // アイテムの補充
@@ -3464,24 +4250,32 @@ __mod['main.js'] = (function () {
       G.spawnTimer -= dt;
       if (G.spawnTimer <= 0) {
         G.spawnTimer = PICKUPS.spawnInterval / DIFFICULTY[G.difficulty].itemRate;
-        pickups.spawnRandom(pickups.picker(G.round), worldRef, player);
+        pickups.spawnRandom(pickups.picker(G.round), worldRef, p);
       }
     }
   
-    // BGMの緊張度は「一番近い鬼との距離」で決める
-    let near = 999;
-    for (const o of G.onis) if (!o.dead) near = Math.min(near, Math.hypot(o.x - player.x, o.z - player.z));
-    audio.setTension(near < 20 ? 1 - (near - 4) / 16 : 0);
+    // BGMの緊張度は「相手との距離」で決める
+    audio.setTension(targetDist < 20 ? 1 - (targetDist - 4) / 16 : 0);
   
-    // 進行判定
-    if (G.phase === 'round' && G.onis.length && G.onis.every(o => o.dead)) finishRound();
-    else if (G.phase === 'interval') {
+    // ---- 進行判定 ----
+    if (G.phase === 'round') {
+      if (G.side === 'duck') {
+        if (G.onis.length && G.onis.every(o => o.dead)) finishDuckRound();
+      } else {
+        G.roundTime -= dt;
+        if (duckAi && duckAi.dead) finishOniRound();
+        else if (G.roundTime <= 0) { G.phase = 'over'; G.timer = 1.2; audio.stopBgm(); }
+      }
+    } else if (G.phase === 'interval') {
       G.timer -= dt;
-      if (G.timer <= 0) startRound(G.round + 1);
+      if (G.timer <= 0) {
+        if (G.side === 'duck') startDuckRound(G.round + 1);
+        else startOniRound(G.round + 1);
+      }
     } else if (G.phase === 'escape') {
-      const d = Math.hypot(player.x - world3d.gate.x, player.z - world3d.gate.z);
+      const d = Math.hypot(p.x - world3d.gate.x, p.z - world3d.gate.z);
       if (d < 3.4) {
-        effects.burst(player.x, 1.2, player.z, 30, [1, 0.9, 0.5], { speed: 8, size: 0.2, life: 1 });
+        effects.burst(p.x, 1.2, p.z, 30, [1, 0.9, 0.5], { speed: 8, size: 0.2, life: 1 });
         endGame(true);
         return;
       }
@@ -3490,13 +4284,37 @@ __mod['main.js'] = (function () {
       if (G.timer <= 0) { endGame(false); return; }
     }
   
-    // HUD更新
-    hud.setHp(player.hp);
+    updateHud(c);
+  }
+  
+  /** アイテムを拾える人たち(鬼はハートだけ拾える) */
+  function collectors() {
+    if (G.side === 'duck') {
+      return [{ who: duckPlayer, onCollect: (k) => duckPlayer.give(k) }];
+    }
+    const list = [];
+    if (duckAi) list.push({ who: duckAi, onCollect: (k) => duckAi.give(k) });
+    list.push({ who: oniPlayer, accept: (k) => k === 'heart', onCollect: (k) => oniPlayer.give(k) });
+    return list;
+  }
+  
+  function updateHud(c) {
+    const p = worldRef.player;
     hud.setScore(G.score);
-    hud.setDash(1 - player.dashCd / 1.15);
-    hud.setWeapon(player.current, player.ammo[player.current]);
-    hud.setWeaponList(player.ammo, player.current);
-    hud.updateOniBars(G.onis);
+    if (G.side === 'duck') {
+      hud.setHp(p.hp, PLAYER.maxHp);
+      hud.setDash(1 - p.dashCd / PLAYER.dashCooldown);
+      hud.setWeapon(p.current, c.infiniteAmmo ? null : p.ammo[p.current]);
+      hud.setWeaponList(p.ammo, p.current, c.infiniteAmmo);
+      hud.updateOniBars(G.onis);
+    } else {
+      hud.setHp(p.hp, ONI_PLAYER.maxHp);
+      hud.setDash(1 - p.dashCd / ONI_PLAYER.dashCooldown);
+      hud.setWeapon('club', null);
+      hud.setWeaponList(null);
+      hud.updateOniBars(duckAi ? [duckAi] : []);
+      if (G.phase === 'round') hud.setTimer(G.roundTime);
+    }
   }
   
   /* ---------------- 画面の出し入れ ---------------- */
@@ -3520,13 +4338,17 @@ __mod['main.js'] = (function () {
   
   function toTitle() {
     G.mode = 'title';
-    clearOnis();
+    clearActors();
     projectiles.clear();
     pickups.clear();
-    player.reset();
+    duckPlayer.reset();
+    duckPlayer.model.root.visible = duckPlayer.model.shadow.visible = true;
+    oniPlayer.model.root.visible = oniPlayer.model.shadow.visible = false;
+    worldRef.player = duckPlayer;
     world3d.gate.setOpen(false);
     input.setEnabled(false);
     audio.stopBgm();
+    hud.setBest(G.best[G.side]);
     hud.showScreen('title', input.state.isTouch);
   }
   
@@ -3539,18 +4361,26 @@ __mod['main.js'] = (function () {
   document.getElementById('quitBtn').addEventListener('click', toTitle);
   document.getElementById('pauseBtn').addEventListener('click', pause);
   
-  document.getElementById('difficultySeg').addEventListener('click', (e) => {
-    const b = e.target.closest('button');
-    if (!b) return;
-    G.difficulty = b.dataset.diff;
-    for (const el of e.currentTarget.children) el.classList.toggle('on', el === b);
-  });
+  /** タイトルの選択ボタン(3つとも同じ動き) */
+  function wireSegment(id, apply) {
+    const seg = document.getElementById(id);
+    seg.addEventListener('click', (e) => {
+      const b = e.target.closest('button');
+      if (!b) return;
+      for (const el of seg.children) el.classList.toggle('on', el === b);
+      apply(b.dataset);
+    });
+  }
+  wireSegment('sideSeg', (d) => { G.side = d.side; hud.setBest(G.best[G.side]); });
+  wireSegment('controlSeg', (d) => { G.control = d.control; });
+  wireSegment('difficultySeg', (d) => { G.difficulty = d.diff; });
   
   addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
   addEventListener('contextmenu', (e) => { if (G.mode === 'playing') e.preventDefault(); });
   
+  oniPlayer.model.root.visible = oniPlayer.model.shadow.visible = false;
   hud.showScreen('title', input.state.isTouch);
-  player.reset();
+  duckPlayer.reset();
   window.__duckEscapeReady = true;   // 読み込みチェック用(index.html が見ている)
   requestAnimationFrame(frame);
   

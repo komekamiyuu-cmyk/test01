@@ -18,6 +18,7 @@ export function createOniEntity(M, parent, def, mul, audio, effects) {
   const e = {
     def, model,
     x: 0, z: 0, facing: 0,
+    radius: def.radius,
     maxHp: Math.round(def.hp * mul.hp),
     hp: Math.round(def.hp * mul.hp),
     speed: def.speed * mul.speed,
@@ -32,9 +33,13 @@ export function createOniEntity(M, parent, def, mul, audio, effects) {
 
   e.place = function (x, z) { e.x = x; e.z = z; e.facing = Math.atan2(-x, -z); };
 
-  e.takeDamage = function (dmg, dirX, dirZ, world) {
+  /** fromX/fromZ は「攻撃してきた側の位置」。そこから外向きにふっとぶ */
+  e.takeDamage = function (dmg, fromX, fromZ) {
     if (e.dead) return 0;
     const before = e.hp;
+    let dirX = e.x - fromX, dirZ = e.z - fromZ;
+    const dl = Math.hypot(dirX, dirZ) || 1;
+    dirX /= dl; dirZ /= dl;
     e.hp = Math.max(0, e.hp - dmg);
     e.flash = 1;
     e.knockX += dirX * def.knockback;
@@ -69,7 +74,7 @@ export function createOniEntity(M, parent, def, mul, audio, effects) {
   }
 
   e.update = function (dt, world) {
-    const pl = world.player;
+    const pl = world.oniTarget;
     e.flash = Math.max(0, e.flash - dt * 3.5);
 
     if (e.dead) {
@@ -133,7 +138,7 @@ export function createOniEntity(M, parent, def, mul, audio, effects) {
           for (let i = 0; i < shots; i++) {
             const a = base + (i - (shots - 1) / 2) * 0.16;
             world.projectiles.spawn({
-              kind: 'onifire', from: 'oni',
+              kind: 'onifire', from: world.oniFaction || 'enemy',
               x: e.x + Math.sin(a) * 1.2, y: 2.0, z: e.z + Math.cos(a) * 1.2,
               dx: Math.sin(a), dz: Math.cos(a),
               speed: def.projectileSpeed, damage: def.attackDamage,
@@ -150,8 +155,7 @@ export function createOniEntity(M, parent, def, mul, audio, effects) {
           e.hitDone = true;
           const ang = Math.abs(((toPlayer - e.facing + Math.PI * 3) % (Math.PI * 2)) - Math.PI);
           if (dist < def.attackRange + 0.9 && ang < 1.1) {
-            pl.takeDamage(def.attackDamage, e.x, e.z, world);
-            world.onPlayerHurt && world.onPlayerHurt();
+            if (pl.takeDamage(def.attackDamage, e.x, e.z, world)) world.onTargetHurt && world.onTargetHurt(pl);
           }
           effects.burst(e.x + dirX * 2.2, 1.2, e.z + dirZ * 2.2, 12, [1, 0.6, 0.3], { speed: 6, size: 0.16, life: 0.4 });
           effects.ring(e.x + dirX * 2.2, 0.07, e.z + dirZ * 2.2, [1, 0.6, 0.3], 0.6, 3.2, 0.35);
@@ -170,11 +174,11 @@ export function createOniEntity(M, parent, def, mul, audio, effects) {
     e.knockZ *= Math.max(0, 1 - dt * 6);
 
     // 仲間どうしが重ならないように
-    for (const other of world.onis) {
+    for (const other of world.onis || []) {
       if (other === e || other.dead) continue;
       const ox = e.x - other.x, oz = e.z - other.z;
       const d = Math.hypot(ox, oz);
-      const min = def.radius + other.def.radius;
+      const min = def.radius + (other.radius || other.def.radius);
       if (d < min && d > 0.0001) {
         e.x = other.x + (ox / d) * min;
         e.z = other.z + (oz / d) * min;

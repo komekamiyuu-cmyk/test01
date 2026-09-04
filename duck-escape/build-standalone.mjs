@@ -29,6 +29,8 @@ const MODULES = [
   'game/pickups.js',
   'game/player.js',
   'game/enemy.js',
+  'game/oni-player.js',
+  'game/duck-ai.js',
   'main.js',
 ];
 
@@ -40,7 +42,10 @@ function resolveKey(fromKey, spec) {
 /** 1モジュールを「即時関数 + exports を返す」形に書き換える */
 function transform(key, src) {
   const exported = [];
-  const lines = src.split('\n');
+  // 複数行にまたがる import を1行にまとめてから処理する
+  const flat = src.replace(/import\s*\{([\s\S]*?)\}\s*from\s*'([^']+)';/g,
+    (_, names, path) => `import { ${names.replace(/\s+/g, ' ').trim().replace(/,$/, '')} } from '${path}';`);
+  const lines = flat.split('\n');
   const out = [];
 
   for (const line of lines) {
@@ -84,6 +89,10 @@ const bundle = [
   ...MODULES.map((k) => transform(k, read(join('js', k)))),
   '})();',
 ].join('\n\n');
+
+// 変換もれがあると1ファイル版だけ動かなくなるので、ここで気づけるようにする
+const leftover = bundle.split('\n').find((l) => /^\s{0,2}(import|export)\s/.test(l));
+if (leftover) throw new Error('変換できていない行があります: ' + leftover.trim());
 
 let html = read('index.html');
 html = html

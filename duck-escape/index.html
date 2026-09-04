@@ -28,6 +28,7 @@
 
     <div class="panel round-panel">
       <div id="roundLabel" class="round-label">ラウンド 1</div>
+      <div id="timer" class="timer hidden">のこり 60</div>
       <div id="oniBars" class="oni-bars"></div>
     </div>
 
@@ -70,46 +71,76 @@
   <div class="screen-inner">
     <div class="title-duck">🦆</div>
     <h1 class="game-title">アヒル逃走記 <span>3D</span></h1>
-    <p class="game-sub">2体の鬼が、ペットのアヒルを追ってくる。<br>落ちている <b>銃</b> と <b>手裏剣</b> で戦いながら、逃げきれ!</p>
+    <p class="game-sub">ペットのアヒル vs 2体の鬼。<br><b>どっちがわ</b>でも あそべます!</p>
 
-    <div class="how-to">
-      <div class="how-col">
-        <h3>⌨️ パソコン</h3>
-        <ul>
-          <li><b>W A S D</b> / 矢印キー … 移動</li>
-          <li><b>マウス</b> … 向きを変える(画面クリックで視点ロック)</li>
-          <li><b>クリック / スペース</b> … 攻撃</li>
-          <li><b>Shift</b> … ダッシュ(回避)</li>
-          <li><b>Q</b> / <b>1 2 3</b> … 武器チェンジ</li>
-          <li><b>P</b> … ポーズ</li>
-        </ul>
+    <div class="choices">
+      <div class="choice-row">
+        <span class="label">どっちであそぶ?</span>
+        <div class="seg big" id="sideSeg">
+          <button data-side="duck" class="on">🦆 アヒル<small>にげる</small></button>
+          <button data-side="oni">👹 鬼<small>おいかける</small></button>
+        </div>
       </div>
-      <div class="how-col">
-        <h3>📱 スマホ</h3>
-        <ul>
-          <li><b>左スティック</b> … 移動</li>
-          <li><b>画面右をなぞる</b> … 向きを変える</li>
-          <li><b>うつ</b> ボタン … 攻撃</li>
-          <li><b>ダッシュ</b> … 回避</li>
-        </ul>
-        <h3 class="mt">🎯 目的</h3>
-        <ul>
-          <li>ラウンドごとに <b>鬼2体</b> をたおす</li>
-          <li>最後は <b>鳥居のゲート</b> まで逃げきればクリア!</li>
-        </ul>
+      <div class="choice-row">
+        <span class="label">そうさ</span>
+        <div class="seg" id="controlSeg">
+          <button data-control="auto" class="on">おまかせ<small>うごかすだけ</small></button>
+          <button data-control="manual">じぶんで<small>ねらって うつ</small></button>
+        </div>
+      </div>
+      <div class="choice-row">
+        <span class="label">むずかしさ</span>
+        <div class="seg" id="difficultySeg">
+          <button data-diff="easy" class="on">やさしい</button>
+          <button data-diff="normal">ふつう</button>
+          <button data-diff="hard">おに</button>
+        </div>
       </div>
     </div>
 
-    <div class="best-row">ハイスコア: <b id="bestScore">0</b></div>
-    <div class="difficulty">
-      <span class="label">むずかしさ</span>
-      <div class="seg" id="difficultySeg">
-        <button data-diff="easy">やさしい</button>
-        <button data-diff="normal" class="on">ふつう</button>
-        <button data-diff="hard">おに</button>
-      </div>
-    </div>
     <button id="startBtn" class="big-btn">▶ ゲームスタート</button>
+    <div class="best-row">ハイスコア: <b id="bestScore">0</b></div>
+
+    <details class="how-to-box">
+      <summary>📖 あそびかた をみる</summary>
+      <div class="how-to">
+        <div class="how-col">
+          <h3>🦆 アヒルであそぶ</h3>
+          <ul>
+            <li>2体の鬼から <b>にげる</b></li>
+            <li>落ちている <b>銃</b> や <b>手裏剣</b> をひろって たたかう</li>
+            <li>鬼を2体たおすと つぎのラウンドへ</li>
+            <li>さいごは <b>鳥居のゲート</b> までにげきればクリア!</li>
+          </ul>
+        </div>
+        <div class="how-col">
+          <h3>👹 鬼であそぶ</h3>
+          <ul>
+            <li>にげるアヒルを <b>おいかけてつかまえる</b></li>
+            <li><b>金棒</b>でなぐって、アヒルのハートを0にする</li>
+            <li>アヒルは武器をひろって <b>うちかえしてくる</b></li>
+            <li>制限時間内に つかまえろ!</li>
+          </ul>
+        </div>
+        <div class="how-col">
+          <h3>🎮 そうさ</h3>
+          <ul>
+            <li><b>おまかせ</b>…うごかすだけ。ねらう・こうげき・カメラは <b>ぜんぶ自動</b></li>
+            <li>パソコン: <b>W A S D</b> / やじるしキー</li>
+            <li>スマホ: <b>左スティック</b></li>
+            <li><b>Shift</b> / ダッシュボタン … かわす</li>
+            <li><b>P</b> … ポーズ</li>
+          </ul>
+          <h3 class="mt">🎯 「じぶんで」をえらぶと</h3>
+          <ul>
+            <li>マウスで見まわす(画面クリックで視点ロック)</li>
+            <li>クリック / <b>スペース</b> でこうげき</li>
+            <li><b>Q</b> / <b>1 2 3</b> で武器チェンジ</li>
+          </ul>
+        </div>
+      </div>
+    </details>
+
     <p class="tiny">音が出ます。ブラウザだけで動きます(インストール不要)</p>
   </div>
 </div>

@@ -27,6 +27,8 @@ export function createPlayer(M, parent, audio, effects) {
     ammo: { shuriken: 0, pistol: 0, machinegun: 0 },
     current: START_WEAPON.id,
     speed: 0,
+    aimYaw: null,          // オートエイム中はこの向きを向く
+    infiniteAmmo: false,   // 「おまかせ操作」では弾切れなし
     model,
     stats: { damage: 0, shots: 0 },
   };
@@ -40,6 +42,7 @@ export function createPlayer(M, parent, audio, effects) {
     p.ammo = { shuriken: 0, pistol: 0, machinegun: 0 };
     p.ammo[START_WEAPON.id] = START_WEAPON.ammo;
     p.current = START_WEAPON.id;
+    p.aimYaw = null;
     p.stats = { damage: 0, shots: 0 };
     model.setWeapon(p.current);
     model.root.visible = true;
@@ -87,13 +90,13 @@ export function createPlayer(M, parent, audio, effects) {
     if (p.down || p.cooldown > 0) return false;
     const w = WEAPONS[p.current];
     if (!w) return false;
-    if (p.ammo[p.current] <= 0) {
+    if (p.ammo[p.current] <= 0 && !p.infiniteAmmo) {
       p.cooldown = 0.25;
       audio.play('empty');
       p.switchWeapon(1);
       return false;
     }
-    p.ammo[p.current]--;
+    if (!p.infiniteAmmo) p.ammo[p.current]--;
     p.cooldown = w.cooldown;
     p.stats.shots++;
 
@@ -189,9 +192,10 @@ export function createPlayer(M, parent, audio, effects) {
     p.x = clamp(nx, -lim, lim);
     p.z = clamp(nz, -lim, lim);
 
-    // 向き: 撃っているときはカメラの向き、ふだんは進行方向
+    // 向き: オートエイム中は敵の方、撃っているときはカメラの向き、ふだんは進行方向
     let want = p.facing;
-    if (input.fire && !p.down) want = camYaw;
+    if (p.aimYaw != null && !p.down) want = p.aimYaw;
+    else if (input.fire && !p.down) want = camYaw;
     else if (moveLen > 0.05) want = Math.atan2(vx, vz);
     p.facing = turnToward(p.facing, want, dt * PLAYER.turnSpeed);
 

@@ -64,20 +64,28 @@ export function createPickups(M, parent, effects) {
 
   return {
     items, create, spawnRandom,
-    /** 拾ったら onCollect(kind) を呼ぶ */
-    update(dt, player, onCollect) {
+    /**
+     * 拾い手は複数いてよい(アヒルと鬼など)。
+     * collectors: [{ who, accept(kind)->bool, onCollect(kind) }]
+     */
+    update(dt, collectors) {
       t += dt;
       for (let i = items.length - 1; i >= 0; i--) {
         const it = items[i];
         it.bob.pos.y = 0.9 + Math.sin(t * 2.2 + it.phase) * 0.16;
         it.bob.rot.y += dt * 1.4;
         if (it.spin) it.spin.rot.z += dt * 5;
-        if (player && !player.down && Math.hypot(player.x - it.x, player.z - it.z) < PICKUPS.radius + player.radius) {
-          const c = GLOW_COLOR[it.kind] || [1, 1, 1];
-          effects.burst(it.x, 1, it.z, 12, c, { speed: 4.5, size: 0.13, life: 0.5 });
-          effects.ring(it.x, 0.06, it.z, c, 0.4, 3, 0.4);
+        for (const c of collectors) {
+          const who = c.who;
+          if (!who || who.down || who.dead) continue;
+          if (c.accept && !c.accept(it.kind)) continue;
+          if (Math.hypot(who.x - it.x, who.z - it.z) > PICKUPS.radius + who.radius) continue;
+          const col = GLOW_COLOR[it.kind] || [1, 1, 1];
+          effects.burst(it.x, 1, it.z, 12, col, { speed: 4.5, size: 0.13, life: 0.5 });
+          effects.ring(it.x, 0.06, it.z, col, 0.4, 3, 0.4);
           remove(it);
-          onCollect(it.kind);
+          c.onCollect(it.kind);
+          break;
         }
       }
     },

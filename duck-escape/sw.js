@@ -1,5 +1,5 @@
 /* アヒル逃走記 3D — オフラインでも遊べるようにファイルをキャッシュする */
-const CACHE = 'duck-escape-v1';
+const CACHE = 'duck-escape-v2';
 const ASSETS = [
   './', './index.html', './style.css', './manifest.json', './icon.svg',
   './js/main.js', './js/config.js', './js/hud.js',
@@ -8,6 +8,7 @@ const ASSETS = [
   './js/models/duck.js', './js/models/oni.js', './js/models/world.js',
   './js/game/input.js', './js/game/audio.js', './js/game/effects.js',
   './js/game/projectiles.js', './js/game/pickups.js', './js/game/player.js', './js/game/enemy.js',
+  './js/game/oni-player.js', './js/game/duck-ai.js',
 ];
 
 self.addEventListener('install', (e) => {
