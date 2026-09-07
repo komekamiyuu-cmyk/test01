@@ -16,6 +16,7 @@ export function createHud() {
     round: $('roundLabel'), oniBars: $('oniBars'), score: $('score'), timer: $('timer'),
     weaponIcon: $('weaponIcon'), weaponName: $('weaponName'), weaponAmmo: $('weaponAmmo'),
     weaponList: $('weaponList'), toast: $('toast'), flash: $('damageFlash'),
+    rotateHint: $('rotateHint'),
     title: $('titleScreen'), pause: $('pauseScreen'), result: $('resultScreen'),
     touch: $('touchUI'), crosshair: $('crosshair'),
     resultTitle: $('resultTitle'), resultText: $('resultText'), resultIcon: $('resultIcon'),

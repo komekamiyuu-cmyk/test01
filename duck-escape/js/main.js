@@ -322,12 +322,16 @@ function startGame() {
   hud.setAutoMode(c.autoFire, input.state.isTouch);
   input.setEnabled(true);
   audio.startBgm();
+  enterImmersive();
+  updateRotateHint();
 }
 
 function endGame(win) {
   G.mode = 'result';
   audio.stopBgm();
   input.setEnabled(false);
+  releaseAwake();
+  updateRotateHint();
 
   let detail = '', titles;
   if (G.side === 'duck') {
@@ -358,6 +362,44 @@ function endGame(win) {
   hud.setBest(G.best[G.side]);
   hud.showResult(win, score, G.best[G.side], detail, titles);
   hud.showScreen('result', input.state.isTouch);
+}
+
+/* ---------------- スマホ向け(全画面・横向き・スリープ防止) ---------------- */
+
+let wakeLock = null;
+
+/** 画面をスリープさせない(対応していない端末では何もしない) */
+async function keepAwake() {
+  try {
+    if ('wakeLock' in navigator && !wakeLock) {
+      wakeLock = await navigator.wakeLock.request('screen');
+      wakeLock.addEventListener('release', () => { wakeLock = null; });
+    }
+  } catch (e) { /* 使えなくてもゲームは動く */ }
+}
+
+function releaseAwake() {
+  try { if (wakeLock) wakeLock.release(); } catch (e) { /* 無視 */ }
+  wakeLock = null;
+}
+
+/** スマホでは全画面+横向きにして、遊べる面積を広げる */
+async function enterImmersive() {
+  if (!input.state.isTouch) return;
+  try {
+    const el = document.documentElement;
+    if (!document.fullscreenElement && el.requestFullscreen) await el.requestFullscreen({ navigationUI: 'hide' });
+  } catch (e) { /* ことわられても続行 */ }
+  try {
+    if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
+  } catch (e) { /* 横向きにできない端末もある */ }
+  keepAwake();
+}
+
+/** たて画面のときだけ「よこにしてね」と出す */
+function updateRotateHint() {
+  const show = input.state.isTouch && G.mode === 'playing' && window.innerHeight > window.innerWidth;
+  hud.el.rotateHint.classList.toggle('hidden', !show);
 }
 
 /* ---------------- カメラ ---------------- */
@@ -460,6 +502,20 @@ let last = performance.now();
 let elapsed = 0;
 const drawList = [];
 
+// 端末が重いときは描画解像度を下げて、動きのなめらかさを優先する
+let fpsTime = 0, fpsFrames = 0;
+
+function autoQuality(dt) {
+  fpsTime += dt;
+  fpsFrames++;
+  if (fpsTime < 2) return;
+  const fps = fpsFrames / fpsTime;
+  fpsTime = 0; fpsFrames = 0;
+  const q = renderer.getQuality();
+  if (fps < 38 && q > 0.6) renderer.setQuality(q - 0.15);
+  else if (fps > 55 && q < 1) renderer.setQuality(q + 0.1);
+}
+
 function frame(now) {
   requestAnimationFrame(frame);
   let dt = (now - last) / 1000;
@@ -470,6 +526,7 @@ function frame(now) {
   if (G.mode === 'playing') step(dt);
   else if (G.mode === 'title') titleCamera(elapsed);
 
+  autoQuality(dt);
   hud.update(dt);
   audio.update();
   world3d.gate.update(elapsed);
@@ -615,6 +672,8 @@ function pause() {
   G.mode = 'paused';
   input.setEnabled(false);
   audio.stopBgm();
+  releaseAwake();
+  updateRotateHint();
   hud.showScreen('pause', input.state.isTouch);
 }
 
@@ -624,11 +683,15 @@ function resume() {
   last = performance.now();
   input.setEnabled(true);
   audio.startBgm();
+  keepAwake();
+  updateRotateHint();
   hud.showScreen('game', input.state.isTouch);
 }
 
 function toTitle() {
   G.mode = 'title';
+  releaseAwake();
+  updateRotateHint();
   clearActors();
   projectiles.clear();
   pickups.clear();
@@ -666,10 +729,16 @@ wireSegment('sideSeg', (d) => { G.side = d.side; hud.setBest(G.best[G.side]); })
 wireSegment('controlSeg', (d) => { G.control = d.control; });
 wireSegment('difficultySeg', (d) => { G.difficulty = d.diff; });
 
-addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+addEventListener('visibilitychange', () => {
+  if (document.hidden) pause();
+  else if (G.mode === 'playing') keepAwake();
+});
+addEventListener('orientationchange', () => setTimeout(updateRotateHint, 250));
+addEventListener('resize', updateRotateHint);
 addEventListener('contextmenu', (e) => { if (G.mode === 'playing') e.preventDefault(); });
 
 oniPlayer.model.root.visible = oniPlayer.model.shadow.visible = false;
+if (input.state.isTouch) document.body.classList.add('touch');
 hud.showScreen('title', input.state.isTouch);
 duckPlayer.reset();
 window.__duckEscapeReady = true;   // 読み込みチェック用(index.html が見ている)

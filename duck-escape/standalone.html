@@ -6,6 +6,8 @@
 <meta name="theme-color" content="#0b0d1a">
 <meta name="description" content="アヒル逃走記 - 2体の鬼から逃げながら、落ちている銃と手裏剣で戦う3Dアクションゲーム。ブラウザだけで遊べます。">
 <title>アヒル逃走記 3D - 2体の鬼から逃げろ!</title>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <style>
 /* ============================================================
    アヒル逃走記 3D — スタイル
@@ -29,6 +31,7 @@
 
 html, body {
   margin: 0; padding: 0; height: 100%; overflow: hidden;
+  -webkit-touch-callout: none;
   background: #05060f;
   color: var(--ink);
   font-family: 'Hiragino Kaku Gothic ProN', 'Noto Sans JP', 'Yu Gothic', Meiryo, system-ui, sans-serif;
@@ -142,6 +145,14 @@ html, body {
   background: var(--panel); border: 1px solid var(--edge); color: var(--ink-dim);
 }
 .weapon-chip.on { color: #1b1405; background: var(--accent); border-color: transparent; font-weight: 700; }
+
+.rotate-hint {
+  position: absolute; left: 50%; bottom: 88px; transform: translateX(-50%);
+  background: rgba(14, 17, 33, .88); border: 1px solid var(--edge); border-radius: 999px;
+  padding: 7px 16px; font-size: 13px; color: var(--ink); white-space: nowrap;
+  box-shadow: 0 6px 18px rgba(0,0,0,.5);
+}
+.rotate-hint b { color: var(--accent); }
 
 .toast {
   position: absolute; left: 50%; top: 26%; transform: translateX(-50%);
@@ -273,11 +284,52 @@ h2 { margin: 8px 0; font-size: 28px; }
 
 @media (max-width: 560px) {
   .screen-inner { padding: 18px 14px; }
-  .hud-top { padding-left: 8px; padding-right: 8px; }
-  .round-panel { min-width: 140px; }
-  .hp-panel { min-width: 120px; }
-  .hearts { font-size: 17px; }
+  .hud-top { padding-left: 8px; padding-right: 8px; gap: 6px; }
+  .panel { padding: 6px 8px; }
+  .round-panel { min-width: 128px; }
+  .hp-panel { min-width: 104px; }
+  .score-panel { min-width: 62px; }
+  .hearts { font-size: 14px; letter-spacing: 0; white-space: nowrap; }
+  .score { font-size: 16px; }
+  .round-label { font-size: 12px; }
   .crosshair { top: 44%; }
+  .rotate-hint { font-size: 12px; padding: 5px 12px; max-width: 92vw; }
+}
+
+/* ---------------- スマホ(タッチ操作) ---------------- */
+
+/* 左下はスティック、右下はボタンなので、武器表示は下の中央に置く */
+body.touch .hud-bottom {
+  left: 50%; transform: translateX(-50%);
+  align-items: center;
+}
+body.touch .weapon-panel { padding: 5px 12px; }
+body.touch .weapon-icon { font-size: 20px; }
+body.touch .weapon-name { font-size: 12px; }
+body.touch .weapon-ammo { font-size: 15px; }
+
+/* 横向きスマホは画面が低いので、HUDを小さくたたむ */
+@media (max-height: 520px) {
+  .panel { padding: 5px 10px; border-radius: 10px; }
+  .hud-top { padding-top: max(6px, env(safe-area-inset-top)); gap: 6px; }
+  .hearts { font-size: 15px; letter-spacing: 0; }
+  .label { font-size: 10px; }
+  .round-label { font-size: 12px; }
+  .timer { font-size: 15px; margin-top: 2px; }
+  .oni-bars { gap: 3px; margin-top: 3px; }
+  .oni-bar { height: 6px; }
+  .score { font-size: 15px; }
+  .score-panel { min-width: 74px; }
+  .hp-panel { min-width: 118px; }
+  .round-panel { min-width: 150px; }
+  .dash-bar { height: 4px; }
+  .toast { top: 20%; font-size: clamp(17px, 4.2vw, 26px); }
+  .stick { width: 104px; height: 104px; left: 14px; bottom: max(14px, env(safe-area-inset-bottom)); }
+  .stick i { width: 44px; height: 44px; margin: -22px 0 0 -22px; }
+  .touch-buttons { right: 12px; bottom: max(12px, env(safe-area-inset-bottom)); gap: 8px; }
+  .tbtn.small { width: 58px; height: 58px; font-size: 10px; }
+  .tbtn.fire { width: 86px; height: 86px; font-size: 16px; }
+  .rotate-hint { font-size: 12px; padding: 5px 12px; }
 }
 
 </style>
@@ -324,6 +376,7 @@ h2 { margin: 8px 0; font-size: 28px; }
   </div>
 
   <div id="toast" class="toast"></div>
+  <div id="rotateHint" class="rotate-hint hidden">📱 スマホを <b>よこ</b> にすると遊びやすいよ</div>
   <div id="damageFlash" class="damage-flash"></div>
 </div>
 
@@ -332,7 +385,7 @@ h2 { margin: 8px 0; font-size: 28px; }
   <div id="stick" class="stick"><i id="stickKnob"></i></div>
   <div class="touch-buttons">
     <button id="btnSwap" class="tbtn small">武器<br>チェンジ</button>
-    <button id="btnDash" class="tbtn small">ダッシュ</button>
+    <button id="btnDash" class="tbtn small">💨<br>よける</button>
     <button id="btnFire" class="tbtn fire">うつ</button>
   </div>
 </div>
@@ -998,10 +1051,13 @@ __mod['engine/gl.js'] = (function () {
       };
     }
   
+    // 描画解像度の倍率。重い端末では main.js が下げる(1.0 = そのまま)
+    let quality = 1;
+  
     function resize() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const w = Math.floor(canvas.clientWidth * dpr);
-      const h = Math.floor(canvas.clientHeight * dpr);
+      const dpr = Math.min(window.devicePixelRatio || 1, 2) * quality;
+      const w = Math.max(1, Math.floor(canvas.clientWidth * dpr));
+      const h = Math.max(1, Math.floor(canvas.clientHeight * dpr));
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
       return canvas.clientWidth / Math.max(canvas.clientHeight, 1);
     }
@@ -1081,7 +1137,11 @@ __mod['engine/gl.js'] = (function () {
   
     const WHITE = [1, 1, 1];
   
-    return { gl, upload, resize, render, light, fog };
+    return {
+      gl, upload, resize, render, light, fog,
+      getQuality: () => quality,
+      setQuality(q) { quality = Math.max(0.5, Math.min(1, q)); },
+    };
   }
   
   return { createRenderer };
@@ -1983,6 +2043,7 @@ __mod['hud.js'] = (function () {
       round: $('roundLabel'), oniBars: $('oniBars'), score: $('score'), timer: $('timer'),
       weaponIcon: $('weaponIcon'), weaponName: $('weaponName'), weaponAmmo: $('weaponAmmo'),
       weaponList: $('weaponList'), toast: $('toast'), flash: $('damageFlash'),
+      rotateHint: $('rotateHint'),
       title: $('titleScreen'), pause: $('pauseScreen'), result: $('resultScreen'),
       touch: $('touchUI'), crosshair: $('crosshair'),
       resultTitle: $('resultTitle'), resultText: $('resultText'), resultIcon: $('resultIcon'),
@@ -4031,12 +4092,16 @@ __mod['main.js'] = (function () {
     hud.setAutoMode(c.autoFire, input.state.isTouch);
     input.setEnabled(true);
     audio.startBgm();
+    enterImmersive();
+    updateRotateHint();
   }
   
   function endGame(win) {
     G.mode = 'result';
     audio.stopBgm();
     input.setEnabled(false);
+    releaseAwake();
+    updateRotateHint();
   
     let detail = '', titles;
     if (G.side === 'duck') {
@@ -4067,6 +4132,44 @@ __mod['main.js'] = (function () {
     hud.setBest(G.best[G.side]);
     hud.showResult(win, score, G.best[G.side], detail, titles);
     hud.showScreen('result', input.state.isTouch);
+  }
+  
+  /* ---------------- スマホ向け(全画面・横向き・スリープ防止) ---------------- */
+  
+  let wakeLock = null;
+  
+  /** 画面をスリープさせない(対応していない端末では何もしない) */
+  async function keepAwake() {
+    try {
+      if ('wakeLock' in navigator && !wakeLock) {
+        wakeLock = await navigator.wakeLock.request('screen');
+        wakeLock.addEventListener('release', () => { wakeLock = null; });
+      }
+    } catch (e) { /* 使えなくてもゲームは動く */ }
+  }
+  
+  function releaseAwake() {
+    try { if (wakeLock) wakeLock.release(); } catch (e) { /* 無視 */ }
+    wakeLock = null;
+  }
+  
+  /** スマホでは全画面+横向きにして、遊べる面積を広げる */
+  async function enterImmersive() {
+    if (!input.state.isTouch) return;
+    try {
+      const el = document.documentElement;
+      if (!document.fullscreenElement && el.requestFullscreen) await el.requestFullscreen({ navigationUI: 'hide' });
+    } catch (e) { /* ことわられても続行 */ }
+    try {
+      if (screen.orientation && screen.orientation.lock) await screen.orientation.lock('landscape');
+    } catch (e) { /* 横向きにできない端末もある */ }
+    keepAwake();
+  }
+  
+  /** たて画面のときだけ「よこにしてね」と出す */
+  function updateRotateHint() {
+    const show = input.state.isTouch && G.mode === 'playing' && window.innerHeight > window.innerWidth;
+    hud.el.rotateHint.classList.toggle('hidden', !show);
   }
   
   /* ---------------- カメラ ---------------- */
@@ -4169,6 +4272,20 @@ __mod['main.js'] = (function () {
   let elapsed = 0;
   const drawList = [];
   
+  // 端末が重いときは描画解像度を下げて、動きのなめらかさを優先する
+  let fpsTime = 0, fpsFrames = 0;
+  
+  function autoQuality(dt) {
+    fpsTime += dt;
+    fpsFrames++;
+    if (fpsTime < 2) return;
+    const fps = fpsFrames / fpsTime;
+    fpsTime = 0; fpsFrames = 0;
+    const q = renderer.getQuality();
+    if (fps < 38 && q > 0.6) renderer.setQuality(q - 0.15);
+    else if (fps > 55 && q < 1) renderer.setQuality(q + 0.1);
+  }
+  
   function frame(now) {
     requestAnimationFrame(frame);
     let dt = (now - last) / 1000;
@@ -4179,6 +4296,7 @@ __mod['main.js'] = (function () {
     if (G.mode === 'playing') step(dt);
     else if (G.mode === 'title') titleCamera(elapsed);
   
+    autoQuality(dt);
     hud.update(dt);
     audio.update();
     world3d.gate.update(elapsed);
@@ -4324,6 +4442,8 @@ __mod['main.js'] = (function () {
     G.mode = 'paused';
     input.setEnabled(false);
     audio.stopBgm();
+    releaseAwake();
+    updateRotateHint();
     hud.showScreen('pause', input.state.isTouch);
   }
   
@@ -4333,11 +4453,15 @@ __mod['main.js'] = (function () {
     last = performance.now();
     input.setEnabled(true);
     audio.startBgm();
+    keepAwake();
+    updateRotateHint();
     hud.showScreen('game', input.state.isTouch);
   }
   
   function toTitle() {
     G.mode = 'title';
+    releaseAwake();
+    updateRotateHint();
     clearActors();
     projectiles.clear();
     pickups.clear();
@@ -4375,10 +4499,16 @@ __mod['main.js'] = (function () {
   wireSegment('controlSeg', (d) => { G.control = d.control; });
   wireSegment('difficultySeg', (d) => { G.difficulty = d.diff; });
   
-  addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
+  addEventListener('visibilitychange', () => {
+    if (document.hidden) pause();
+    else if (G.mode === 'playing') keepAwake();
+  });
+  addEventListener('orientationchange', () => setTimeout(updateRotateHint, 250));
+  addEventListener('resize', updateRotateHint);
   addEventListener('contextmenu', (e) => { if (G.mode === 'playing') e.preventDefault(); });
   
   oniPlayer.model.root.visible = oniPlayer.model.shadow.visible = false;
+  if (input.state.isTouch) document.body.classList.add('touch');
   hud.showScreen('title', input.state.isTouch);
   duckPlayer.reset();
   window.__duckEscapeReady = true;   // 読み込みチェック用(index.html が見ている)

@@ -8,7 +8,10 @@
 <title>アヒル逃走記 3D - 2体の鬼から逃げろ!</title>
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.svg">
-<link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -53,6 +56,7 @@
   </div>
 
   <div id="toast" class="toast"></div>
+  <div id="rotateHint" class="rotate-hint hidden">📱 スマホを <b>よこ</b> にすると遊びやすいよ</div>
   <div id="damageFlash" class="damage-flash"></div>
 </div>
 
@@ -61,7 +65,7 @@
   <div id="stick" class="stick"><i id="stickKnob"></i></div>
   <div class="touch-buttons">
     <button id="btnSwap" class="tbtn small">武器<br>チェンジ</button>
-    <button id="btnDash" class="tbtn small">ダッシュ</button>
+    <button id="btnDash" class="tbtn small">💨<br>よける</button>
     <button id="btnFire" class="tbtn fire">うつ</button>
   </div>
 </div>

@@ -1,13 +1,21 @@
 {
+  "id": "/duck-escape/",
   "name": "アヒル逃走記 3D",
   "short_name": "アヒル逃走記",
-  "description": "2体の鬼から逃げながら、落ちている銃と手裏剣で戦う3Dアクションゲーム",
+  "description": "2体の鬼から逃げる? それとも鬼になって追いかける? ブラウザだけで遊べる3Dアクションゲーム",
   "start_url": "./index.html",
+  "scope": "./",
+  "lang": "ja",
   "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
   "orientation": "landscape",
   "background_color": "#05060f",
   "theme_color": "#0b0d1a",
+  "categories": ["games", "entertainment"],
   "icons": [
-    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
 }

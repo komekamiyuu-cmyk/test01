@@ -141,10 +141,13 @@ export function createRenderer(canvas) {
     };
   }
 
+  // 描画解像度の倍率。重い端末では main.js が下げる(1.0 = そのまま)
+  let quality = 1;
+
   function resize() {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    const w = Math.floor(canvas.clientWidth * dpr);
-    const h = Math.floor(canvas.clientHeight * dpr);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2) * quality;
+    const w = Math.max(1, Math.floor(canvas.clientWidth * dpr));
+    const h = Math.max(1, Math.floor(canvas.clientHeight * dpr));
     if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
     return canvas.clientWidth / Math.max(canvas.clientHeight, 1);
   }
@@ -224,5 +227,9 @@ export function createRenderer(canvas) {
 
   const WHITE = [1, 1, 1];
 
-  return { gl, upload, resize, render, light, fog };
+  return {
+    gl, upload, resize, render, light, fog,
+    getQuality: () => quality,
+    setQuality(q) { quality = Math.max(0.5, Math.min(1, q)); },
+  };
 }

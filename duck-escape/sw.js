@@ -1,7 +1,8 @@
 /* アヒル逃走記 3D — オフラインでも遊べるようにファイルをキャッシュする */
-const CACHE = 'duck-escape-v2';
+const CACHE = 'duck-escape-v3';
 const ASSETS = [
   './', './index.html', './style.css', './manifest.json', './icon.svg',
+  './icons/icon-192.png', './icons/icon-512.png',
   './js/main.js', './js/config.js', './js/hud.js',
   './js/engine/math.js', './js/engine/gl.js', './js/engine/geometry.js', './js/engine/scene.js',
   './js/models/meshes.js', './js/models/parts.js', './js/models/items.js',
